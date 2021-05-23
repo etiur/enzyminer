@@ -69,7 +69,7 @@ class EnsembleVoting:
         # predict ch2_20 features
         scaling = MinMaxScaler()
         X_svc = pd.read_excel(f"{self.learning}", index_col=0, sheet_name=f"{feature_set}", engine='openpyxl')
-        new_svc = pd.read_csv(f"{file_path}", index_col=0)
+        new_svc = pd.read_csv(f"{file_path}", index_col=0, header=None)
 
         if X_svc.isnull().values.any():
             X_svc.dropna(axis=1, inplace=True)
