@@ -6,7 +6,6 @@ import shlex
 from subprocess import Popen
 import time
 import pandas as pd
-from mpi4py import MPI, futures
 import glob
 
 
@@ -61,6 +60,10 @@ class ExtractFeatures:
             A directory for the extraction results from possum
         """
         self.fasta_file = fasta_file
+        if len(self.fasta_file.split("/") > 1):
+            self.base = os.path.dirname(self.fasta_file)
+        else:
+            self.base = "."
         if not pssm_dir:
             self.pssm_dir = "/gpfs/home/bsc72/bsc72661/feature_extraction/pssm_files/pssm"
         else:
@@ -103,8 +106,6 @@ class ExtractFeatures:
             The number of files to separate the original fasta_file
         """
 
-        if not os.path.exists(f"{self.fasta_dir}"):
-            os.makedirs(f"{self.fasta_dir}")
         with open(self.fasta_file) as inp:
             record = SeqIO.parse(inp, "fasta")
             record_list = list(record)
@@ -113,16 +114,12 @@ class ExtractFeatures:
                 for i, batch in enumerate(self._batch_iterator(record, 20_000)):
                     filename = f"group_{i+1}.fasta"
                     record_list.append(filename)
-                    with open(f"{self.fasta_dir}/{filename}", "w") as split:
+                    with open(f"{self.base}/{filename}", "w") as split:
                         fasta_out = FastaIO.FastaWriter(split, wrap=None)
                         fasta_out.write_file(batch)
                 return True
             else:
-                if len(self.fasta_file.split("/")) > 1:
-                    name = f"{os.path.dirname(self.fasta_file)}/group_1.fasta"
-                else:
-                    name = "group_1.fasta"
-                os.rename(self.fasta_file, name)
+                os.rename(self.fasta_file, f"{self.base}/group_1.fasta")
                 return False
 
     def feature_extraction(self, fasta_file):
@@ -195,13 +192,11 @@ class ExtractFeatures:
         """
         run the ifeature programme in different processes
         """
-        if len(self.fasta_file.split("/")) > 1:
-            name = f"{os.path.dirname(self.fasta_file)}/group_1.fasta"
-        else:
-            name = "group_1.fasta"
+
+        name = f"{self.base}/group_1.fasta"
         if not os.path.exists(name):
             self._separate_bunch()
-        file = glob.glob(f"{self.fasta_dir}/group_*.fasta")
+        file = glob.glob(f"{self.base}/group_*.fasta")
         file.sort(key=lambda x: int(x.replace(".fasta", "").split("_")[1]))
         if restart:
             file = file[file.index(restart):]
@@ -213,9 +208,9 @@ class ReadFeatures:
     """
     A class to read the generated features
     """
-    def __init__(self, fasta_file=None, ifeature_out="/gpfs/projects/bsc72/ruite/feature_extraction/power9/ifeature",
+    def __init__(self, fasta_file, ifeature_out="/gpfs/projects/bsc72/ruite/feature_extraction/power9/ifeature",
                  possum_out="/gpfs/projects/bsc72/ruite/feature_extraction/power9/possum",
-                 filtered_out="/gpfs/home/bsc72/bsc72661/feature_extraction/filtered_features", fasta_dir="fasta_dir"):
+                 filtered_out="/gpfs/home/bsc72/bsc72661/feature_extraction/filtered_features"):
         """
         Initialize the class ReadFeatures
 
@@ -235,9 +230,10 @@ class ReadFeatures:
         self.features = None
         self.learning = "/gpfs/home/bsc72/bsc72661//feature_extraction/data/esterase_binary.xlsx"
         self.filtered_out = filtered_out
-        if fasta_file:
-            self.name = os.path.basename(fasta_file).replace(".fasta", "")
-        self.fasta_dir = fasta_dir
+        if len(fasta_file.split("/") > 1):
+            self.base = os.path.dirname(fasta_file)
+        else:
+            self.base = "."
 
     def read_ifeature(self, length):
         """
@@ -307,7 +303,7 @@ class ReadFeatures:
         """
         Reads all the features
         """
-        file = glob.glob(f"{self.fasta_dir}/group_*.fasta")
+        file = glob.glob(f"{self.base}/group_*.fasta")
         all_data = self.read_ifeature(len(file))
         everything = self.read_possum(all_data.index, len(file))
         # concatenate the features
