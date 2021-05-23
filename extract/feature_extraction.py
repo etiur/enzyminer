@@ -26,10 +26,11 @@ def arg_parse():
                         default="/gpfs/home/bsc72/bsc72661/feature_extraction/filtered_features")
     parser.add_argument("-on", "--filter_only", required=False, help="true if you already have the features",
                         action="store_true")
+    parser.add_argument("-fl", "--file", required=False, help="The file to restart the extraction with")
     args = parser.parse_args()
 
     return [args.fasta_file, args.pssm_dir, args.fasta_dir, args.ifeature, args.possum, args.ifeature_out,
-            args.possum_out, args.filtered_out, args.filter_only]
+            args.possum_out, args.filtered_out, args.filter_only, args.file]
 
 
 class ExtractFeatures:
@@ -107,9 +108,9 @@ class ExtractFeatures:
         with open(self.fasta_file) as inp:
             record = SeqIO.parse(inp, "fasta")
             record_list = list(record)
-            if len(record_list) > 40_000:
+            if len(record_list) > 20_000:
                 record_list.clear()
-                for i, batch in enumerate(self._batch_iterator(record, 40_000)):
+                for i, batch in enumerate(self._batch_iterator(record, 20_000)):
                     filename = f"group_{i+1}.fasta"
                     record_list.append(filename)
                     with open(f"{self.fasta_dir}/{filename}", "w") as split:
@@ -118,25 +119,43 @@ class ExtractFeatures:
                 return True
             else:
                 if len(self.fasta_file.split("/")) > 1:
-                    name = f"{os.path.basename(self.fasta_file)}/group_1.fasta"
+                    name = f"{os.path.dirname(self.fasta_file)}/group_1.fasta"
                 else:
                     name = "group_1.fasta"
                 os.rename(self.fasta_file, name)
                 return False
 
-    def run_ifeature(self, fasta_file):
+    def feature_extraction(self, fasta_file):
         """
         A function to run the iFeature programme
         """
         num = fasta_file.replace(".fasta", "").split("_")[1]
         if not os.path.exists(f"{self.ifeature_out}"):
             os.makedirs(f"{self.ifeature_out}")
+
         # writing all the commands for the ifeature
         types = ["APAAC", "CKSAAGP", "CTDD", "Moran", "Geary"]
         commands_1 = [
             f"python3 {self.ifeature} --file {fasta_file} --type {prog} --out {self.ifeature_out}/{prog}_{num}.tsv" for
             prog in types]
 
+        # writing the commands for possum
+        types_possum = ["pssm_composition", "tpc", "k_separated_bigrams_pssm", "dp_pssm"]
+        command_1_possum = [
+            f'perl {self.possum} -i {self.fasta_file} -p {self.pssm_dir} -t {prog} -o {self.possum_out}/{prog}_{num}.csv' for
+            prog in types_possum]
+
+        command_2_possum = [
+            f'perl {self.possum} -i {self.fasta_file} -p {self.pssm_dir} -t pse_pssm -a 3 -o {self.possum_out}/pse_pssm_3_{num}.csv']
+        long = ["pssm_cc", "tri_gram_pssm"]
+        command_3_possum = [
+            f'perl {self.possum} -i {self.fasta_file} -p {self.pssm_dir} -t {prog} -o {self.possum_out}/{prog}_{num}.csv' for
+            prog in long]
+
+        # combining all the commands
+        command_1_possum.extend(command_2_possum)
+        command_1_possum.extend(command_3_possum)
+        commands_1.extend(command_1_possum)
         # using shlex.split to parse the strings into lists for Popen class
         proc = [Popen(shlex.split(command), close_fds=False) for command in commands_1]
         start = time.time()
@@ -152,30 +171,42 @@ class ExtractFeatures:
             os.makedirs(f"{self.possum_out}")
         num = fasta_file.replace(".fasta", "").split("_")[1]
         # writing the commands for possum
-        types = ["pssm_composition", "tri_gram_pssm", "tpc", "k_separated_bigrams_pssm", "dp_pssm", "pssm_cc"]
-        command_1 = [
+        types_possum = ["pssm_composition", "tpc", "k_separated_bigrams_pssm", "dp_pssm"]
+        command_1_possum = [
             f'perl {self.possum} -i {self.fasta_file} -p {self.pssm_dir} -t {prog} -o {self.possum_out}/{prog}_{num}.csv' for
-            prog in types]
+            prog in types_possum]
 
-        command_2 = [
+        command_2_possum = [
             f'perl {self.possum} -i {self.fasta_file} -p {self.pssm_dir} -t pse_pssm -a 3 -o {self.possum_out}/pse_pssm_3_{num}.csv']
+        long = ["pssm_cc", "tri_gram_pssm"]
+        command_3_possum = [
+            f'perl {self.possum} -i {self.fasta_file} -p {self.pssm_dir} -t {prog} -o {self.possum_out}/{prog}_{num}.csv' for
+            prog in long]
         # using shlex.split to parse the strings into lists for Popen class
-        command_1.extend(command_2)
-        proc = [Popen(shlex.split(command), close_fds=False) for command in command_1]
+        command_1_possum.extend(command_2_possum)
+        command_1_possum.extend(command_3_possum)
+        proc = [Popen(shlex.split(command), close_fds=False) for command in command_1_possum]
         start = time.time()
         for p in proc:
             p.wait()
         end = time.time()
 
-    def run_extraction_mpi(self):
+    def run_extraction(self, restart=None):
         """
         run the ifeature programme in different processes
         """
-        self._separate_bunch()
-        with futures.MPICommExecutor() as executor:
-            file = glob.glob(f"{self.fasta_dir}/group_*.fasta")
-            executor.map(self.run_ifeature, file, unordered=True)
-            executor.map(self.run_possum, file, unordered=True)
+        if len(self.fasta_file.split("/")) > 1:
+            name = f"{os.path.dirname(self.fasta_file)}/group_1.fasta"
+        else:
+            name = "group_1.fasta"
+        if not os.path.exists(name):
+            self._separate_bunch()
+        file = glob.glob(f"{self.fasta_dir}/group_*.fasta")
+        file.sort(key=lambda x: int(x.replace(".fasta", "").split("_")[1]))
+        if restart:
+            file = file[file.index(restart):]
+        for files in file:
+            self.feature_extraction(files)
 
 
 class ReadFeatures:
@@ -310,7 +341,7 @@ def extract_and_filter(fasta_file=None, pssm_dir=None, fasta_dir=None, ifeature=
                        ifeature_out="/gpfs/projects/bsc72/ruite/feature_extraction/power9/ifeature",
                        possum_out="/gpfs/projects/bsc72/ruite/feature_extraction/power9/possum",
                        filtered_out="/gpfs/home/bsc72/bsc72661/feature_extraction/filtered_features",
-                       filter_only=False):
+                       filter_only=False, restart=None):
     """
     A function to extract and filter the features
 
@@ -336,16 +367,17 @@ def extract_and_filter(fasta_file=None, pssm_dir=None, fasta_dir=None, ifeature=
     # Feature extraction
     if not filter_only:
         extract = ExtractFeatures(fasta_file, pssm_dir, fasta_dir, ifeature, ifeature_out, possum, possum_out)
-        extract.run_extraction_mpi()
+        extract.run_extraction(restart)
     # feature filtering
     filtering = ReadFeatures(fasta_file, ifeature_out, possum_out, filtered_out)
     filtering.filter_features()
 
 
 def main():
-    fasta_file, pssm_dir, fasta_dir, ifeature, possum, ifeature_out, possum_out, filtered_out, filter_only = arg_parse()
+    fasta_file, pssm_dir, fasta_dir, ifeature, possum, ifeature_out, possum_out, filtered_out, filter_only, \
+    file = arg_parse()
     extract_and_filter(fasta_file, pssm_dir, fasta_dir, ifeature, possum, ifeature_out, possum_out, filtered_out,
-                       filter_only)
+                       filter_only, file)
 
 
 if __name__ == "__main__":
