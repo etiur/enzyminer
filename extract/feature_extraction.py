@@ -340,60 +340,64 @@ class ExtractFeatures:
             p.wait()
         end = time.time()
 
-    def run_extraction_ifeature(self, restart=None, long=False):
+    def extraction_ifeature(self, fasta_file):
         """
         run the ifeature programme iteratively
 
         Parameters
         ----------
-        restart: str
-            The file to restart the programmes with
-        long:
-            If to run only the longer features
+        fasta_file: str
+            path to the different fasta_files
         """
-        name = f"{self.base}/group_1.fasta"
-        if not os.path.exists(name):
-            self._separate_bunch()
-        file = glob.glob(f"{self.base}/group_*.fasta")
-        file.sort(key=lambda x: int(basename(x).replace(".fasta", "").split("_")[1]))
-        if restart:
-            file = file[file.index(restart):]
-        if not long:
-            for files in file:
-                self.ifeature_short(files)
-            for files in file:
-                self.ifeature_long(files)
-        else:
-            for files in file:
-                self.ifeature_long(files)
+        num = basename(fasta_file).replace(".fasta", "").split("_")[1]
+        if not os.path.exists(f"{self.ifeature_out}"):
+            os.makedirs(f"{self.ifeature_out}")
+        # ifeature features
+        types = ["APAAC", "CKSAAGP", "CTDD"]
+        commands_1 = [
+            f"python3 {self.ifeature} --file {fasta_file} --type {prog} --out {self.ifeature_out}/{prog}_{num}.tsv" for
+            prog in types]
+        ifeature_long = ["Moran", "Geary"]
+        commands_1_long = [
+            f"python3 {self.ifeature} --file {fasta_file} --type {prog} --out {self.ifeature_out}/{prog}_{num}.tsv" for
+            prog in ifeature_long]
+        # combining the commands
+        commands_1.extend(commands_1_long)
+        proc = [Popen(shlex.split(command), close_fds=False) for command in commands_1]
+        start = time.time()
+        for p in proc:
+            p.wait()
+        end = time.time()
 
-    def run_extraction_possum(self, restart=None, long=False):
+    def extraction_possum(self, fasta_file):
         """
         run the possum programme in different iteratively
 
         Parameters
         ----------
-        restart: str
-            The file to restart the programmes with
-        long:
-            If to run only the longer features
+        fasta_file: str
+            Path to the different fasta files
         """
-
-        name = f"{self.base}/group_1.fasta"
-        if not os.path.exists(name):
-            self._separate_bunch()
-        file = glob.glob(f"{self.base}/group_*.fasta")
-        file.sort(key=lambda x: int(basename(x).replace(".fasta", "").split("_")[1]))
-        if restart:
-            file = file[file.index(restart):]
-        if not long:
-            for files in file:
-                self.possum_short(files)
-            for files in file:
-                self.possum_short(files)
-        else:
-            for files in file:
-                self.possum_long(files)
+        # possum features
+        types_possum = ["pssm_composition", "tpc", "k_separated_bigrams_pssm", "dp_pssm"]
+        command_1_possum = [
+            f'perl {self.possum} -i {fasta_file} -p {self.pssm_dir} -t {prog} -o {self.possum_out}/{prog}_{num}.csv' for
+            prog in types_possum]
+        command_2_possum = [
+            f'perl {self.possum} -i {fasta_file} -p {self.pssm_dir} -t pse_pssm -a 3 -o {self.possum_out}/pse_pssm_3_{num}.csv']
+        possum_long = ["pssm_cc", "tri_gram_pssm"]
+        command_3_possum = [
+            f'perl {self.possum} -i {fasta_file} -p {self.pssm_dir} -t {prog} -o {self.possum_out}/{prog}_{num}.csv' for
+            prog in possum_long]
+        # combining all the commands
+        command_1_possum.extend(command_2_possum)
+        command_1_possum.extend(command_3_possum)
+        # using shlex.split to parse the strings into lists for Popen class
+        proc = [Popen(shlex.split(command), close_fds=False) for command in command_1_possum]
+        start = time.time()
+        for p in proc:
+            p.wait()
+        end = time.time()
 
     def run_extraction_all(self, restart=None, long=False):
         """
@@ -448,14 +452,12 @@ class ExtractFeatures:
                     pool.map(self.extraction_long, file)
             elif self.run == "possum":
                 if not long:
-                    pool.map(self.possum_short, file)
-                    pool.map(self.possum_long, file)
+                    pool.map(self.extraction_possum, file)
                 else:
                     pool.map(self.possum_long, file)
             elif self.run == "ifeature":
                 if not long:
-                    pool.map(self.ifeature_short, file)
-                    pool.map(self.ifeature_long, file)
+                    pool.map(self.extraction_ifeature, file)
                 else:
                     pool.map(self.ifeature_long, file)
 
