@@ -12,6 +12,7 @@ import time
 import logging
 from subprocess import call
 import shlex
+from multiprocessing import Process
 
 
 def arg_parse():
@@ -26,10 +27,11 @@ def arg_parse():
     parser.add_argument("-i", "--fasta_file", required=False, help="The fasta file")
     parser.add_argument("-m", "--mpi", required=False, help="true if using mpi to parallelize", action="store_true")
     parser.add_argument("-PO", "--possum", required=False, help="A path to the possum programme")
+    parser.add_argument("-num", "--number", required=False, help="a number for the files", default="*")
     args = parser.parse_args()
 
     return [args.fasta_file, args.fasta_dir, args.pssm_dir, args.dbdir, args.dbinp, args.dbout, args.num_thread,
-            args.mpi, args.possum]
+            args.mpi, args.possum, args.number]
 
 
 class ExtractPssm:
@@ -37,7 +39,7 @@ class ExtractPssm:
     A class to extract pssm profiles from protein sequecnes
     """
     def __init__(self, fasta=None, num_threads=10, fasta_dir=None, pssm_dir=None, dbdir=None, dbinp=None, dbout=None,
-                 possum=None):
+                 possum_dir=None):
         """
         Initialize the ExtractPssm class
 
@@ -80,10 +82,10 @@ class ExtractPssm:
         else:
             self.dbout = dbout
         self.num_thread = num_threads
-        if not possum:
-            self.possum = "~/feature_extraction/POSSUM_Toolkit/"
+        if not possum_dir:
+            self.possum = "/gpfs/home/bsc72/bsc72661/feature_extraction/POSSUM_Toolkit"
         else:
-            self.possum = possum
+            self.possum = possum_dir
 
     def makedata(self):
         """
@@ -128,18 +130,26 @@ class ExtractPssm:
                     fasta_out.write_record(seq)
                 count += 1
 
-    def _check_pssm(self):
+    def _check_pssm(self, files):
         """
         Check if the pssm files are correct
         """
+        with open(files, "r") as pssm:
+            if "PSI" not in pssm.read():
+                os.remove(files)
+
+    def fast_check(self):
+        """
+        Accelerates the checking of files
+        """
+        pros = []
         file = glob.glob(f"{self.pssm}/*.pssm")
-        if len(file) > 0:
-            for files in file:
-                with open(files, "r") as pssm:
-                    if "PSI" not in pssm.read():
-                        os.remove(files)
-        else:
-            pass
+        for prep_pdb in file:
+            p = Process(target=self._check_pssm, args=(prep_pdb,))
+            p.start()
+            pros.append(p)
+        for p in pros:
+            p.join()
 
     def generate(self, file=None):
         """
@@ -160,18 +170,16 @@ class ExtractPssm:
             end = time.time()
             print(f"it took {end - start} to finish {name}.pssm")
             return stdout_psi, stderr_psi
-        else:
-            if path.exists(f"{file}"):
-                os.remove(f"{file}")
 
-    def run_generate(self):
+    def run_generate(self, num):
         """
         run the generate function
         """
         if not os.path.exists(f"{self.fasta_dir}/seq_3.fsa"):
             self.separate_single()
-        self._check_pssm()
-        file = glob.glob(f"{self.fasta_dir}/*.fsa")
+        self.fast_check()
+        file = glob.glob(f"{self.fasta_dir}/{num}*.fsa")
+        file.sort(key=lambda x: int(basename(x).replace(".fsa", "").split("_")[1]))
         for files in file:
             self.generate(files)
 
@@ -194,7 +202,7 @@ class ExtractPssm:
 
 
 def generate_pssm(fasta=None, num_threads=10, fasta_dir=None, pssm_dir=None, dbdir=None, dbinp=None, dbout=None,
-                  mpi=False, possum=None):
+                  mpi=False, possum=None, num="*"):
     """
     A function that creates protein databases, generates the pssms and returns the list of files
 
@@ -219,14 +227,14 @@ def generate_pssm(fasta=None, num_threads=10, fasta_dir=None, pssm_dir=None, dbd
     if dbinp and dbout:
         pssm.makedata()
     if not mpi:
-        pssm.run_generate()
+        pssm.run_generate(num)
     else:
         pssm.mpi_parallel()
 
 
 def main():
-    fasta_file, fasta_dir, pssm_dir, dbdir, dbinp, dbout, num_thread, mpi, possum = arg_parse()
-    generate_pssm(fasta_file, num_thread, fasta_dir, pssm_dir, dbdir, dbinp, dbout, mpi, possum)
+    fasta_file, fasta_dir, pssm_dir, dbdir, dbinp, dbout, num_thread, mpi, possum, num = arg_parse()
+    generate_pssm(fasta_file, num_thread, fasta_dir, pssm_dir, dbdir, dbinp, dbout, mpi, possum, num)
 
 
 if __name__ == "__main__":

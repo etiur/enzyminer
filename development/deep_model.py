@@ -1,3 +1,7 @@
+import numpy as np
+np.random.seed(10)
+from tensorflow.random import set_seed
+set_seed(2)
 from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.layers import Dense, Dropout, Bidirectional, Embedding, LSTM, MaxPooling1D, Conv1D
 from tensorflow.keras.layers import concatenate, GlobalMaxPooling1D, AveragePooling1D, Flatten, Layer
@@ -11,7 +15,6 @@ import matplotlib.pyplot as plt
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.preprocessing.text import Tokenizer
-import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
@@ -42,7 +45,7 @@ def arg_parse():
     parser.add_argument("-c", "--csv_dir", required=False, help="the name of the directory for the metrics",
                         default="metrics_csv")
     parser.add_argument("-e", "--epochs", required=False, type=int, help="the number of epochs to run the fit",
-                        default=80)
+                        default=90)
     parser.add_argument("-r", "--restart", required=False, help="Indicate the topology to restart with",
                         choices=("cnn", "rnn", "inception", "rnn_cnn", "rnn_inception"), default=None)
     parser.add_argument("-o", "--only", required=False, help="Indicate which topology to train", nargs="+",
@@ -404,33 +407,33 @@ class DeepNetworkSearch:
         """
         # hyperparameters
         emb = hp.Int("emb_output", min_value=10, max_value=90, step=10)
-        lstm_1 = hp.Int("LSTM_1", min_value=32, max_value=412, step=32, default=64)
-        lstm_2 = hp.Int("LSTM_2", min_value=32, max_value=412, step=32, default=64)
+        lstm_1 = hp.Int("LSTM_1", min_value=32, max_value=250, step=32, default=64)
+        lstm_2 = hp.Int("LSTM_2", min_value=32, max_value=250, step=32, default=64)
         drop_lstm1 = hp.Float("dropout_lstm1", min_value=0.0, max_value=0.5, default=0.0, step=0.1)
         drop_lstm2 = hp.Float("dropout_lstm2", min_value=0.0, max_value=0.5, default=0.0, step=0.1)
         recurrent_drop1 = hp.Float("recurrent_lstm1", min_value=0.0, max_value=0.5, default=0.0, step=0.1)
         recurrent_drop2 = hp.Float("recurrent_lstm2", min_value=0.0, max_value=0.5, default=0.0, step=0.1)
-        units_1 = hp.Int("units_1", min_value=32, max_value=212, step=32, default=64)
+        units_1 = hp.Int("units_1", min_value=32, max_value=150, step=32, default=64)
         drop = hp.Float("dropout", min_value=0.0, max_value=0.5, default=0.0, step=0.1)
-        units_2 = hp.Int("units_2", min_value=32, max_value=212, step=32, default=64)
+        units_2 = hp.Int("units_2", min_value=32, max_value=150, step=32, default=64)
         # model
         model = Sequential()
         model.add(Embedding(21, emb, mask_zero=True, input_length=self.maxlen))
-        model.add(Bidirectional(LSTM(lstm_1, return_sequences=True, dropout=drop_lstm1,
-                                     recurrent_dropout=recurrent_drop1)))
+        #model.add(Bidirectional(LSTM(lstm_1, return_sequences=True, dropout=drop_lstm1,
+        #                             recurrent_dropout=recurrent_drop1)))
         if hp.Choice("attention", ["attention", "no_attention"]) == "no_attention":
             model.add(Bidirectional(LSTM(lstm_2, dropout=drop_lstm2, recurrent_dropout=recurrent_drop2)))
         else:
             model.add(Bidirectional(LSTM(lstm_2, dropout=drop_lstm2, recurrent_dropout=recurrent_drop2,
                                          return_sequences=True)))
             model.add(MyAttention())
-        model.add(Dense(units_1, activation="relu"))
-        model.add(Dropout(drop))
+        # model.add(Dense(units_1, activation="relu"))
+        # model.add(Dropout(drop))
         model.add(Dense(units_2, activation="relu"))
         model.add((Dense(2, activation="softmax")))
 
         # compile
-        learning = PolynomialDecay(initial_learning_rate=0.008, end_learning_rate=0.0008, decay_steps=100, power=0.8)
+        learning = PolynomialDecay(initial_learning_rate=0.001, end_learning_rate=0.0001, decay_steps=80, power=0.8)
         if hp.Choice('optimizer', ['adam', 'adamax']) == 'adamax':
             opti = Adamax(learning_rate=learning)
         else:
@@ -448,13 +451,13 @@ class DeepNetworkSearch:
             The input shape of the cnn layer
         """
         # hyperparameters
-        conv_f1 = hp.Int("filter1", min_value=32, max_value=352, step=32, default=64)
+        conv_f1 = hp.Int("filter1", min_value=32, max_value=250, step=32, default=64)
         kernel_1 = hp.Int("kernel1", min_value=1, max_value=8, step=2, default=6)
-        conv_f2 = hp.Int("filter2", min_value=32, max_value=352, step=32, default=64)
+        conv_f2 = hp.Int("filter2", min_value=32, max_value=250, step=32, default=64)
         kernel_2 = hp.Int("kernel2", min_value=1, max_value=8, step=2, default=6)
-        conv_f3 = hp.Int("filter3", min_value=32, max_value=352, step=32, default=64)
+        conv_f3 = hp.Int("filter3", min_value=32, max_value=250, step=32, default=64)
         kernel_3 = hp.Int("kernel3", min_value=1, max_value=8, step=2, default=6)
-        units_1 = hp.Int("units_1", min_value=32, max_value=212, step=32, default=64)
+        units_1 = hp.Int("units_1", min_value=32, max_value=150, step=32, default=64)
         drop_hp = hp.Float("dropout_hp", min_value=0.0, max_value=0.5, default=0.0, step=0.1)
         pool_1 = hp.Int("pool1", min_value=1, max_value=3, step=1, default=1)
         pool_2 = hp.Int("pool2", min_value=1, max_value=3, step=1, default=1)
@@ -465,8 +468,8 @@ class DeepNetworkSearch:
         model.add(MaxPooling1D(pool_1))
         model.add(Conv1D(conv_f2, kernel_2, activation="relu"))
         model.add(MaxPooling1D(pool_2))
-        model.add(Conv1D(conv_f3, kernel_3, activation="relu"))
-        model.add(MaxPooling1D(pool_3))
+        # model.add(Conv1D(conv_f3, kernel_3, activation="relu"))
+        # model.add(MaxPooling1D(pool_3))
         if hp.Choice('sequential_pooling', ['global', 'flatten', "attention"]) == 'global':
             model.add(GlobalMaxPooling1D())
         elif hp.Choice('sequential_pooling', ['global', 'flatten', "attention"]) == 'attention':
@@ -477,7 +480,7 @@ class DeepNetworkSearch:
         model.add(Dropout(drop_hp))
         model.add(Dense(2, activation="softmax"))
         # compile
-        learning = PolynomialDecay(initial_learning_rate=0.008, end_learning_rate=0.0008, decay_steps=100, power=0.8)
+        learning = PolynomialDecay(initial_learning_rate=0.0008, end_learning_rate=0.0001, decay_steps=80, power=0.8)
         if hp.Choice('optimizer', ['adam', 'adamax']) == 'adamax':
             opti = Adamax(learning_rate=learning)
         else:
@@ -496,32 +499,32 @@ class DeepNetworkSearch:
             Used for the keras Tuner to find the optimal hyperparameters
         """
         # hyperparameters
-        conv_f1 = hp.Int("filter1", min_value=32, max_value=352, step=32, default=64)
+        conv_f1 = hp.Int("filter1", min_value=32, max_value=250, step=32, default=64)
         kernel_1 = hp.Int("kernel1", min_value=1, max_value=8, step=2, default=6)
-        conv_f2 = hp.Int("filter2", min_value=32, max_value=352, step=32, default=64)
+        conv_f2 = hp.Int("filter2", min_value=32, max_value=250, step=32, default=64)
         kernel_2 = hp.Int("kernel2", min_value=1, max_value=8, step=2, default=6)
-        conv_f3 = hp.Int("filter3", min_value=32, max_value=352, step=32, default=64)
+        conv_f3 = hp.Int("filter3", min_value=32, max_value=250, step=32, default=64)
         kernel_3 = hp.Int("kernel3", min_value=1, max_value=8, step=2, default=6)
-        conv_f4 = hp.Int("filter4", min_value=32, max_value=352, step=32, default=64)
+        conv_f4 = hp.Int("filter4", min_value=32, max_value=250, step=32, default=64)
         kernel_4 = hp.Int("kernel4", min_value=1, max_value=8, step=2, default=6)
-        conv_f5 = hp.Int("filter5", min_value=32, max_value=352, step=32, default=64)
+        conv_f5 = hp.Int("filter5", min_value=32, max_value=250, step=32, default=64)
         kernel_5 = hp.Int("kernel5", min_value=1, max_value=8, step=2, default=6)
-        conv_f6 = hp.Int("filter6", min_value=32, max_value=352, step=32, default=64)
+        conv_f6 = hp.Int("filter6", min_value=32, max_value=250, step=32, default=64)
         kernel_6 = hp.Int("kernel6", min_value=1, max_value=8, step=2, default=6)
-        units_1 = hp.Int("units_1", min_value=32, max_value=212, step=32, default=64)
+        units_1 = hp.Int("units_1", min_value=32, max_value=150, step=32, default=64)
         drop_hp = hp.Float("dropout_hp", min_value=0.0, max_value=0.5, default=0.0, step=0.1)
         pool_1 = hp.Int("pool1", min_value=1, max_value=3, step=1, default=1)
         pool_2 = hp.Int("pool2", min_value=1, max_value=3, step=1, default=1)
         # model
         input_cnn = Input(shape=self.shape, name="cnn_input")
         branch_a_cnn = Conv1D(conv_f1, kernel_1, activation="relu", strides=2, padding="same")(input_cnn)
-        branch_b_cnn = Conv1D(conv_f2, kernel_2, activation="relu", padding="same")(input_cnn)
-        branch_b_cnn = Conv1D(conv_f3, kernel_3, activation="relu", strides=2, padding="same")(branch_b_cnn)
+        # branch_b_cnn = Conv1D(conv_f2, kernel_2, activation="relu", padding="same")(input_cnn)
+        # branch_b_cnn = Conv1D(conv_f3, kernel_3, activation="relu", strides=2, padding="same")(branch_b_cnn)
         average_pool_c = AveragePooling1D(pool_1, strides=2, padding="same")(input_cnn)
         branch_c_cnn = Conv1D(conv_f4, kernel_4, activation="relu", padding="same")(average_pool_c)
-        branch_d_cnn = Conv1D(conv_f5, kernel_5, activation="relu", padding="same")(input_cnn)
-        branch_d_cnn = Conv1D(conv_f6, kernel_6, activation="relu", strides=2, padding="same")(branch_d_cnn)
-        inception = concatenate([branch_a_cnn, branch_b_cnn, branch_c_cnn, branch_d_cnn])
+        # branch_d_cnn = Conv1D(conv_f5, kernel_5, activation="relu", padding="same")(input_cnn)
+        # branch_d_cnn = Conv1D(conv_f6, kernel_6, activation="relu", strides=2, padding="same")(branch_d_cnn)
+        inception = concatenate([branch_a_cnn, branch_c_cnn])
         if hp.Choice('inception_pooling', ['global', 'flatten', "attention"]) == 'global':
             inception = MaxPooling1D(pool_2)(inception)
             flat = GlobalMaxPooling1D()(inception)
@@ -530,12 +533,12 @@ class DeepNetworkSearch:
         else:
             inception = MaxPooling1D(pool_2)(inception)
             flat = Flatten()(inception)
-        dense1 = Dense(units_1, activation="relu")(flat)
-        drop = Dropout(drop_hp)(dense1)
-        output = Dense(2, activation="softmax")(drop)
+        # dense1 = Dense(units_1, activation="relu")(flat)
+        # drop = Dropout(drop_hp)(flat)
+        output = Dense(2, activation="softmax")(flat)
         model = Model(input_cnn, output)
         # compile
-        learning = PolynomialDecay(initial_learning_rate=0.008, end_learning_rate=0.0008, decay_steps=100, power=0.8)
+        learning = PolynomialDecay(initial_learning_rate=0.001, end_learning_rate=0.0001, decay_steps=80, power=0.8)
         if hp.Choice('optimizer', ['adam', 'adamax']) == 'adamax':
             opti = Adamax(learning_rate=learning)
         else:
@@ -555,22 +558,22 @@ class DeepNetworkSearch:
         log_folder: str, optional
             The name of the log folder
         """
-        call_list = [EarlyStopping(monitor="val_loss", restore_best_weights=True, patience=8)]
+        call_list = [EarlyStopping(monitor="val_loss", restore_best_weights=True, patience=40)]
         if mode == "rnn":
-            tuner = Hyperband(self.sequential_rnn, objective="val_categorical_crossentropy", max_epochs=self.epoch-55,
+            tuner = Hyperband(self.sequential_rnn, objective="val_categorical_crossentropy", max_epochs=self.epoch-45,
                               seed=50, overwrite=True)
             tuner.search(self.x_train_hot, self.y_train, shuffle=True, validation_data=(self.x_test_hot, self.y_test),
-                         epochs=self.epoch, callbacks=call_list)
+                         epochs=self.epoch, callbacks=call_list, batch_size=5)
         elif mode == "cnn":
-            tuner = Hyperband(self.sequential_cnn, objective="val_categorical_crossentropy", max_epochs=self.epoch-55,
+            tuner = Hyperband(self.sequential_cnn, objective="val_categorical_crossentropy", max_epochs=self.epoch-45,
                               seed=40, overwrite=True)
             tuner.search(self.x_train_vec, self.y_train, shuffle=True, validation_data=(self.x_test_vec, self.y_test),
-                         epochs=self.epoch, callbacks=call_list)
+                         epochs=self.epoch, callbacks=call_list, batch_size=5)
         elif mode == "inception":
-            tuner = Hyperband(self.inception_cnn, objective="val_categorical_crossentropy", max_epochs=self.epoch-55,
+            tuner = Hyperband(self.inception_cnn, objective="val_categorical_crossentropy", max_epochs=self.epoch-45,
                               seed=12, overwrite=True)
             tuner.search(self.x_train_vec, self.y_train, shuffle=True, validation_data=(self.x_test_vec, self.y_test),
-                         epochs=self.epoch, callbacks=call_list)
+                         epochs=self.epoch, callbacks=call_list, batch_size=5)
         K.clear_session()
         return tuner
 
@@ -609,10 +612,12 @@ class DeepNetworkSearch:
         call_list = [EarlyStopping(monitor="val_loss", restore_best_weights=True, patience=15)]
         if mode != "rnn":
             history = model.fit(self.x_train_vec, self.y_train, shuffle=True,
-                                validation_data=(self.x_test_vec, self.y_test), epochs=self.epoch, callbacks=call_list)
+                                validation_data=(self.x_test_vec, self.y_test), epochs=self.epoch, callbacks=call_list,
+                                batch_size=5)
         else:
             history = model.fit(self.x_train_hot, self.y_train, shuffle=True,
-                                validation_data=(self.x_test_hot, self.y_test), epochs=self.epoch, callbacks=call_list)
+                                validation_data=(self.x_test_hot, self.y_test), epochs=self.epoch, callbacks=call_list,
+                                batch_size=5)
         history = pd.DataFrame(history.history)
         history.index = [f"model_{fold}" for _ in range(len(history))]
         train_pred = model.predict(x_train)
@@ -706,13 +711,13 @@ class MultiInputNetworkSearch:
             Used for the keras Tuner to find the optimal hyperparameters
         """
         # cnn hyperparameters
-        conv_f1 = hp.Int("filter1", min_value=32, max_value=352, step=32, default=64)
+        conv_f1 = hp.Int("filter1", min_value=32, max_value=250, step=32, default=64)
         kernel_1 = hp.Int("kernel1", min_value=1, max_value=8, step=2, default=6)
-        conv_f2 = hp.Int("filter2", min_value=32, max_value=352, step=32, default=64)
+        conv_f2 = hp.Int("filter2", min_value=32, max_value=250, step=32, default=64)
         kernel_2 = hp.Int("kernel2", min_value=1, max_value=8, step=2, default=6)
-        conv_f3 = hp.Int("filter3", min_value=32, max_value=352, step=32, default=64)
+        conv_f3 = hp.Int("filter3", min_value=32, max_value=250, step=32, default=64)
         kernel_3 = hp.Int("kernel3", min_value=1, max_value=8, step=2, default=6)
-        units_1 = hp.Int("units_1", min_value=32, max_value=212, step=32, default=64)
+        units_1 = hp.Int("units_1", min_value=32, max_value=150, step=32, default=64)
         drop_hp = hp.Float("dropout_hp", min_value=0.0, max_value=0.6, default=0.0, step=0.1)
         pool_1 = hp.Int("pool1", min_value=1, max_value=3, step=1, default=1)
         pool_2 = hp.Int("pool2", min_value=1, max_value=3, step=1, default=1)
@@ -722,9 +727,9 @@ class MultiInputNetworkSearch:
         conv1 = Conv1D(conv_f1, kernel_1, activation="relu")(input_cnn)
         max1 = MaxPooling1D(pool_1)(conv1)
         conv2 = Conv1D(conv_f2, kernel_2, activation="relu")(max1)
-        max2 = MaxPooling1D(pool_2)(conv2)
-        cnn_network = Conv1D(conv_f3, kernel_3, activation="relu")(max2)
-        cnn_network = MaxPooling1D(pool_3)(cnn_network)
+        cnn_network = MaxPooling1D(pool_2)(conv2)
+        # cnn_network = Conv1D(conv_f3, kernel_3, activation="relu")(max2)
+        # cnn_network = MaxPooling1D(pool_3)(cnn_network)
         if hp.Choice('rnn_cnn_pooling', ['global', 'flatten', "attention"]) == 'global':
             flat = GlobalMaxPooling1D()(cnn_network)
         elif hp.Choice('rnn_cnn_pooling', ['global', 'flatten', "attention"]) == 'attention':
@@ -733,8 +738,8 @@ class MultiInputNetworkSearch:
             flat = Flatten()(cnn_network)
         # rnn hyperparameters
         emb = hp.Int("emb_output", min_value=10, max_value=90, step=10)
-        lstm_1 = hp.Int("LSTM_1", min_value=32, max_value=352, step=32, default=64)
-        lstm_2 = hp.Int("LSTM_2", min_value=32, max_value=352, step=32, default=64)
+        lstm_1 = hp.Int("LSTM_1", min_value=32, max_value=250, step=32, default=64)
+        lstm_2 = hp.Int("LSTM_2", min_value=32, max_value=250, step=32, default=64)
         drop_lstm1 = hp.Float("dropout_lstm1", min_value=0.0, max_value=0.5, default=0.0, step=0.1)
         drop_lstm2 = hp.Float("dropout_lstm2", min_value=0.0, max_value=0.5, default=0.0, step=0.1)
         recurrent_drop1 = hp.Float("recurrent_lstm1", min_value=0.0, max_value=0.5, default=0.0, step=0.1)
@@ -742,9 +747,9 @@ class MultiInputNetworkSearch:
 
         # rnn network
         input_rnn = Input(name="rnn_input", shape=self.maxlen)
-        embed = Embedding(21, emb, mask_zero=True)(input_rnn)
-        rnn1 = Bidirectional(LSTM(lstm_1, return_sequences=True, dropout=drop_lstm1, recurrent_dropout=recurrent_drop1
-                                  ))(embed)
+        rnn1 = Embedding(21, emb, mask_zero=True)(input_rnn)
+        # rnn1 = Bidirectional(LSTM(lstm_1, return_sequences=True, dropout=drop_lstm1, recurrent_dropout=recurrent_drop1
+        #                           ))(embed)
         if hp.Choice("attention_rnn_cnn", ["attention", "no_attention"]) == "no_attention":
             rnn2 = Bidirectional(LSTM(lstm_2, dropout=drop_lstm2, recurrent_dropout=recurrent_drop2))(rnn1)
         else:
@@ -753,13 +758,13 @@ class MultiInputNetworkSearch:
             rnn2 = MyAttention()(rnn2)
         # concatenate and generate the model
         concat = concatenate([flat, rnn2], axis=-1)
-        dense1 = Dense(units_1, activation="relu")(concat)
-        drop = Dropout(drop_hp)(dense1)
+        # dense1 = Dense(units_1, activation="relu")(concat)
+        drop = Dropout(drop_hp)(concat)
         output = Dense(2, activation="softmax")(drop)
         model = Model([input_cnn, input_rnn], output)
 
         # compile
-        learning = PolynomialDecay(initial_learning_rate=0.008, end_learning_rate=0.0008, decay_steps=100, power=0.8)
+        learning = PolynomialDecay(initial_learning_rate=0.001, end_learning_rate=0.0001, decay_steps=80, power=0.8)
         if hp.Choice('optimizer', ['adam', 'adamax']) == 'adamax':
             opti = Adamax(learning_rate=learning)
         else:
@@ -777,32 +782,32 @@ class MultiInputNetworkSearch:
             The HyperParameters class in keras tuner
         """
         # hyperparameters
-        conv_f1 = hp.Int("filter1", min_value=32, max_value=352, step=32, default=64)
+        conv_f1 = hp.Int("filter1", min_value=32, max_value=250, step=32, default=64)
         kernel_1 = hp.Int("kernel1", min_value=1, max_value=8, step=2, default=6)
-        conv_f2 = hp.Int("filter2", min_value=32, max_value=352, step=32, default=64)
+        conv_f2 = hp.Int("filter2", min_value=32, max_value=250, step=32, default=64)
         kernel_2 = hp.Int("kernel2", min_value=1, max_value=8, step=2, default=6)
-        conv_f3 = hp.Int("filter3", min_value=32, max_value=352, step=32, default=64)
+        conv_f3 = hp.Int("filter3", min_value=32, max_value=250, step=32, default=64)
         kernel_3 = hp.Int("kernel3", min_value=1, max_value=8, step=2, default=6)
-        conv_f4 = hp.Int("filter4", min_value=32, max_value=352, step=32, default=64)
+        conv_f4 = hp.Int("filter4", min_value=32, max_value=250, step=32, default=64)
         kernel_4 = hp.Int("kernel4", min_value=1, max_value=8, step=2, default=6)
-        conv_f5 = hp.Int("filter5", min_value=32, max_value=352, step=32, default=64)
+        conv_f5 = hp.Int("filter5", min_value=32, max_value=250, step=32, default=64)
         kernel_5 = hp.Int("kernel5", min_value=1, max_value=8, step=2, default=6)
-        conv_f6 = hp.Int("filter6", min_value=32, max_value=352, step=32, default=64)
+        conv_f6 = hp.Int("filter6", min_value=32, max_value=250, step=32, default=64)
         kernel_6 = hp.Int("kernel6", min_value=1, max_value=8, step=2, default=6)
-        units_1 = hp.Int("units_1", min_value=32, max_value=212, step=32, default=64)
+        units_1 = hp.Int("units_1", min_value=32, max_value=150, step=32, default=64)
         drop_hp = hp.Float("dropout_hp", min_value=0.0, max_value=0.5, default=0.0, step=0.1)
         pool_1 = hp.Int("pool1", min_value=1, max_value=3, step=1, default=1)
         pool_2 = hp.Int("pool2", min_value=1, max_value=3, step=1, default=1)
         # model
         input_cnn = Input(shape=self.shape, name="cnn_input")
         branch_a_cnn = Conv1D(conv_f1, kernel_1, activation="relu", strides=2, padding="same")(input_cnn)
-        branch_b_cnn = Conv1D(conv_f2, kernel_2, activation="relu", padding="same")(input_cnn)
-        branch_b_cnn = Conv1D(conv_f3, kernel_3, activation="relu", strides=2, padding="same")(branch_b_cnn)
+        # branch_b_cnn = Conv1D(conv_f2, kernel_2, activation="relu", padding="same")(input_cnn)
+        # branch_b_cnn = Conv1D(conv_f3, kernel_3, activation="relu", strides=2, padding="same")(branch_b_cnn)
         average_pool_c = AveragePooling1D(pool_1, strides=2, padding="same")(input_cnn)
         branch_c_cnn = Conv1D(conv_f4, kernel_4, activation="relu", padding="same")(average_pool_c)
-        branch_d_cnn = Conv1D(conv_f5, kernel_5, activation="relu", padding="same")(input_cnn)
-        branch_d_cnn = Conv1D(conv_f6, kernel_6, activation="relu", strides=2, padding="same")(branch_d_cnn)
-        inception = concatenate([branch_a_cnn, branch_b_cnn, branch_c_cnn, branch_d_cnn])
+        # branch_d_cnn = Conv1D(conv_f5, kernel_5, activation="relu", padding="same")(input_cnn)
+        # branch_d_cnn = Conv1D(conv_f6, kernel_6, activation="relu", strides=2, padding="same")(branch_d_cnn)
+        inception = concatenate([branch_a_cnn,  branch_c_cnn, ])
         inception = MaxPooling1D(pool_2)(inception)
         if hp.Choice('rnn_inception_pooling', ['global', 'flatten', "attention"]) == 'global':
             flat = GlobalMaxPooling1D()(inception)
@@ -813,17 +818,17 @@ class MultiInputNetworkSearch:
 
         # rnn hyperparameters
         emb = hp.Int("emb_output", min_value=10, max_value=90, step=10)
-        lstm_1 = hp.Int("LSTM_1", min_value=32, max_value=352, step=32, default=64)
-        lstm_2 = hp.Int("LSTM_2", min_value=32, max_value=352, step=32, default=64)
+        lstm_1 = hp.Int("LSTM_1", min_value=32, max_value=250, step=32, default=64)
+        lstm_2 = hp.Int("LSTM_2", min_value=32, max_value=250, step=32, default=64)
         drop_lstm1 = hp.Float("dropout_lstm1", min_value=0.0, max_value=0.5, default=0.0, step=0.1)
         drop_lstm2 = hp.Float("dropout_lstm2", min_value=0.0, max_value=0.5, default=0.0, step=0.1)
         recurrent_drop1 = hp.Float("recurrent_lstm1", min_value=0.0, max_value=0.5, default=0.0, step=0.1)
         recurrent_drop2 = hp.Float("recurrent_lstm2", min_value=0.0, max_value=0.5, default=0.0, step=0.1)
         # rnn network
         input_rnn = Input(name="rnn_input", shape=self.maxlen)
-        embed = Embedding(21, emb, mask_zero=True)(input_rnn)
-        rnn1 = Bidirectional(LSTM(lstm_1, return_sequences=True, dropout=drop_lstm1, recurrent_dropout=recurrent_drop1
-                                  ))(embed)
+        rnn1 = Embedding(21, emb, mask_zero=True)(input_rnn)
+        # rnn1 = Bidirectional(LSTM(lstm_1, return_sequences=True, dropout=drop_lstm1, recurrent_dropout=recurrent_drop1
+        #                           ))(embed)
         if hp.Choice("attention_rnn_inception", ["attention", "no_attention"]) == "no_attention":
             rnn2 = Bidirectional(LSTM(lstm_2, dropout=drop_lstm2, recurrent_dropout=recurrent_drop2))(rnn1)
         else:
@@ -832,13 +837,13 @@ class MultiInputNetworkSearch:
             rnn2 = MyAttention()(rnn2)
         # concatenate and generate the model
         concat = concatenate([flat, rnn2], axis=-1)
-        dense1 = Dense(units_1, activation="relu")(concat)
-        drop = Dropout(drop_hp)(dense1)
+        # dense1 = Dense(units_1, activation="relu")(concat)
+        drop = Dropout(drop_hp)(concat)
         output = Dense(2, activation="softmax")(drop)
         model = Model([input_cnn, input_rnn], output)
 
         # compile
-        learning = PolynomialDecay(initial_learning_rate=0.008, end_learning_rate=0.0008, decay_steps=100, power=0.8)
+        learning = PolynomialDecay(initial_learning_rate=0.001, end_learning_rate=0.0001, decay_steps=80, power=0.8)
         if hp.Choice('optimizer', ['adam', 'adamax']) == 'adamax':
             opti = Adamax(learning_rate=learning)
         else:
@@ -851,17 +856,17 @@ class MultiInputNetworkSearch:
         """
         Search for the best hyper parameters
         """
-        call_list = [EarlyStopping(monitor="val_loss", restore_best_weights=True, patience=8)]
+        call_list = [EarlyStopping(monitor="val_loss", restore_best_weights=True, patience=30)]
         if mode == "rnn_cnn":
-            tuner = Hyperband(self.rnn_cnn, objective="val_categorical_crossentropy", max_epochs=self.epoch-55,
+            tuner = Hyperband(self.rnn_cnn, objective="val_categorical_crossentropy", max_epochs=self.epoch-45,
                               seed=10, overwrite=True)
             tuner.search({"rnn_input": self.x_train_hot, "cnn_input": self.x_train_vec}, self.y_train, shuffle=True,
-                         validation_split=0.10, epochs=self.epoch, callbacks=call_list)
+                         validation_split=0.17, epochs=self.epoch, callbacks=call_list, batch_size=5)
         elif mode == "rnn_inception":
-            tuner = Hyperband(self.rnn_inception, objective="val_categorical_crossentropy", max_epochs=self.epoch-55,
+            tuner = Hyperband(self.rnn_inception, objective="val_categorical_crossentropy", max_epochs=self.epoch-45,
                               seed=2, overwrite=True)
             tuner.search({"rnn_input": self.x_train_hot, "cnn_input": self.x_train_vec}, self.y_train, shuffle=True,
-                         validation_split=0.10, epochs=self.epoch, callbacks=call_list)
+                         validation_split=0.17, epochs=self.epoch, callbacks=call_list, batch_size=5)
         K.clear_session()
         return tuner
 
@@ -899,7 +904,7 @@ class MultiInputNetworkSearch:
             os.makedirs(f"{log_folder}_{mode}")
         call_list = [EarlyStopping(monitor="val_loss", restore_best_weights=True, patience=15)]
         history = model.fit({"rnn_input": self.x_train_hot, "cnn_input": self.x_train_vec}, self.y_train,
-                            shuffle=True, epochs=self.epoch, callbacks=call_list, validation_split=0.10)
+                            shuffle=True, epochs=self.epoch, callbacks=call_list, validation_split=0.17, batch_size=5)
         history = pd.DataFrame(history.history)
         history.index = [f"model_{fold}" for _ in range(len(history))]
         # concatenate both metrics
@@ -969,7 +974,7 @@ class DeepNetwork:
         model.add((Dense(2, activation="softmax")))
 
         # compile
-        learning = PolynomialDecay(initial_learning_rate=0.008, end_learning_rate=0.0008, decay_steps=100, power=0.8)
+        learning = PolynomialDecay(initial_learning_rate=0.0008, end_learning_rate=0.0001, decay_steps=80, power=0.8)
         if not adam:
             opti = Adamax(learning_rate=learning)
         else:
@@ -1005,7 +1010,7 @@ class DeepNetwork:
         model.add(Dropout(drop))
         model.add(Dense(2, activation="softmax"))
         # compile
-        learning = PolynomialDecay(initial_learning_rate=0.008, end_learning_rate=0.0008, decay_steps=100, power=0.8)
+        learning = PolynomialDecay(initial_learning_rate=0.0008, end_learning_rate=0.0001, decay_steps=80, power=0.8)
         if optimizer == 'adamax':
             opti = Adamax(learning_rate=learning)
         else:
@@ -1047,7 +1052,7 @@ class DeepNetwork:
         output = Dense(2, activation="softmax")(drop)
         model = Model(input_cnn, output)
         # compile
-        learning = PolynomialDecay(initial_learning_rate=0.008, end_learning_rate=0.0008, decay_steps=100, power=0.8)
+        learning = PolynomialDecay(initial_learning_rate=0.0008, end_learning_rate=0.0001, decay_steps=80, power=0.8)
         if optimizer == 'adamax':
             opti = Adamax(learning_rate=learning)
         else:
@@ -1124,7 +1129,7 @@ class MultiInputNetwork:
         model = Model([input_cnn, input_rnn], output)
 
         # compile
-        learning = PolynomialDecay(initial_learning_rate=0.008, end_learning_rate=0.0008, decay_steps=100, power=0.8)
+        learning = PolynomialDecay(initial_learning_rate=0.0008, end_learning_rate=0.0001, decay_steps=80, power=0.8)
         if optimizer == 'adamax':
             opti = Adamax(learning_rate=learning)
         else:
@@ -1174,7 +1179,7 @@ class MultiInputNetwork:
         model = Model([input_cnn, input_rnn], output)
 
         # compile
-        learning = PolynomialDecay(initial_learning_rate=0.008, end_learning_rate=0.0008, decay_steps=100, power=0.8)
+        learning = PolynomialDecay(initial_learning_rate=0.0008, end_learning_rate=0.0001, decay_steps=80, power=0.8)
         if optimizer == 'adamax':
             opti = Adamax(learning_rate=learning)
         else:
@@ -1259,7 +1264,6 @@ def train(protein_dataset="/gpfs/home/bsc72/bsc72661/feature_extraction/data/seq
     epochs: int
         The number of epochs to train
     """
-    np.random.seed(10)
     encoding = Encode(protein_dataset, vec)
     prot_list = encoding.prot2vec()
     one_hot = encoding.tokenized()
@@ -1273,19 +1277,22 @@ def train(protein_dataset="/gpfs/home/bsc72/bsc72661/feature_extraction/data/seq
     if not os.path.exists(f"{csv_dir}/{mode}"):
         os.makedirs(f"{csv_dir}/{mode}")
     # reserve a test set
+    indices = [i for i in range(len(one_hot))]
+    np.random.shuffle(indices)
+    one_hot = one_hot[indices]
+    categorical_label = categorical_label[indices]
+    sequences = sequences.iloc[indices]
     count = 1
-    kf = StratifiedKFold(n_splits=6, shuffle=True, random_state=20)
+    kf = StratifiedKFold(n_splits=6)
     for train_index, test_index in kf.split(one_hot, sequences["label"]):
         # shuffling more the indices since kfolds does not do that very well
-        np.random.shuffle(train_index)
-        np.random.shuffle(test_index)
         x_train_vec, x_test_vec = prot_list[train_index], prot_list[test_index]
         y_train, y_test = categorical_label[train_index], categorical_label[test_index]
         x_train_hot, x_test_hot = one_hot[train_index], one_hot[test_index]
 
         # create a validation set
-        x_train2_hot, x_val_hot, y_train2_hot, y_val_hot = encoding.processing(x_train_hot, y_train, split=0.10)
-        x_train_2_vec, x_val_vec, y_train_2_vec, y_val_vec = encoding.processing(x_train_vec, y_train, split=0.10)
+        x_train2_hot, x_val_hot, y_train2_hot, y_val_hot = encoding.processing(x_train_hot, y_train, split=0.17)
+        x_train_2_vec, x_val_vec, y_train_2_vec, y_val_vec = encoding.processing(x_train_vec, y_train, split=0.17)
 
         if mode == "rnn_cnn" or mode == "rnn_inception":
             train_data = {"rnn_input": x_train_hot, "cnn_input": x_train_vec}
@@ -1324,10 +1331,10 @@ def train(protein_dataset="/gpfs/home/bsc72/bsc72661/feature_extraction/data/seq
     history = pd.concat(history_list)
     # writing to csv_files
     history.to_csv(f"{csv_dir}/{mode}/history_metrics.csv", header=False)
-    test_metric_list.to_csv(f"{csv_dir}/{mode}/test_metrics.csv", header=False)
-    train_metric_list.to_csv(f"{csv_dir}/{mode}/train_metrics.csv", header=False)
-    tr_report_list.to_csv(f"{csv_dir}/{mode}/tr_reports.csv", header=False)
-    te_report_list.to_csv(f"{csv_dir}/{mode}/te_reports.csv", header=False)
+    test_metric_list.to_csv(f"{csv_dir}/{mode}/test_metrics.csv", header=True)
+    train_metric_list.to_csv(f"{csv_dir}/{mode}/train_metrics.csv", header=True)
+    tr_report_list.to_csv(f"{csv_dir}/{mode}/tr_reports.csv", header=True)
+    te_report_list.to_csv(f"{csv_dir}/{mode}/te_reports.csv", header=True)
 
 
 def train_from_hps(protein_dataset="/gpfs/home/bsc72/bsc72661/feature_extraction/data/sequences.xlsx",
@@ -1367,11 +1374,13 @@ def train_from_hps(protein_dataset="/gpfs/home/bsc72/bsc72661/feature_extraction
         os.makedirs(f"{csv_dir}/{mode}")
     # reserve a test set
     count = 1
-    kf = StratifiedKFold(n_splits=6, shuffle=True, random_state=20)
+    indices = [i for i in range(len(one_hot))]
+    np.random.shuffle(indices)
+    one_hot = one_hot[indices]
+    categorical_label = categorical_label[indices]
+    sequences = sequences.iloc[indices]
+    kf = StratifiedKFold(n_splits=6)
     for train_index, test_index in kf.split(one_hot, sequences["label"]):
-        # shuffling more the indices since kfolds does not do that very well
-        np.random.shuffle(train_index)
-        np.random.shuffle(test_index)
         x_train_vec, x_test_vec = prot_list[train_index], prot_list[test_index]
         y_train, y_test = categorical_label[train_index], categorical_label[test_index]
         x_train_hot, x_test_hot = one_hot[train_index], one_hot[test_index]
@@ -1461,10 +1470,10 @@ def train_from_hps(protein_dataset="/gpfs/home/bsc72/bsc72661/feature_extraction
     # writing to csv_files
     eval_list.to_csv(f"{csv_dir}/{mode}/evaluation.csv", header=False)
     history.to_csv(f"{csv_dir}/{mode}/history_metrics.csv", header=False)
-    test_metric_list.to_csv(f"{csv_dir}/{mode}/test_metrics.csv", header=False)
-    train_metric_list.to_csv(f"{csv_dir}/{mode}/train_metrics.csv", header=False)
-    tr_report_list.to_csv(f"{csv_dir}/{mode}/tr_reports.csv", header=False)
-    te_report_list.to_csv(f"{csv_dir}/{mode}/te_reports.csv", header=False)
+    test_metric_list.to_csv(f"{csv_dir}/{mode}/test_metrics.csv", header=True)
+    train_metric_list.to_csv(f"{csv_dir}/{mode}/train_metrics.csv", header=True)
+    tr_report_list.to_csv(f"{csv_dir}/{mode}/tr_reports.csv", header=True)
+    te_report_list.to_csv(f"{csv_dir}/{mode}/te_reports.csv", header=True)
 
 
 def train_all(protein_dataset="/gpfs/home/bsc72/bsc72661/feature_extraction/data/sequences.xlsx",
