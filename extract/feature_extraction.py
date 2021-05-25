@@ -315,33 +315,6 @@ class ExtractFeatures:
             p.wait()
         end = time.time()
 
-    def run_extraction_all(self, restart=None, long=False):
-        """
-        Run the 2 programmes iteratively
-
-        Parameters
-        ----------
-        restart: str
-            The file to restart the programmes with
-        long:
-            If to run only the longer features
-        """
-        name = f"{self.base}/group_1.fasta"
-        if not os.path.exists(name):
-            self._separate_bunch()
-        file = glob.glob(f"{self.base}/group_*.fasta")
-        file.sort(key=lambda x: int(basename(x).replace(".fasta", "").split("_")[1]))
-        if restart:
-            file = file[file.index(restart):]
-        if not long:
-            for files in file:
-                self.extraction_short(files)
-            for files in file:
-                self.extraction_long(files)
-        else:
-            for files in file:
-                self.extraction_long(files)
-
     def run_extraction_parallel(self, restart=None, long=None):
         """
         Using a pool of workers to run the 2 programmes
