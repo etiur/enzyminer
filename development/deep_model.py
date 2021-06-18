@@ -558,22 +558,23 @@ class DeepNetworkSearch:
         log_folder: str, optional
             The name of the log folder
         """
-        call_list = [EarlyStopping(monitor="val_loss", restore_best_weights=True, patience=40)]
+        call_list = [EarlyStopping(monitor="val_loss", restore_best_weights=True, patience=15)]
+        call_list_rnn = [EarlyStopping(monitor="val_loss", restore_best_weights=True, patience=10)]
         if mode == "rnn":
-            tuner = Hyperband(self.sequential_rnn, objective="val_categorical_crossentropy", max_epochs=self.epoch-45,
+            tuner = Hyperband(self.sequential_rnn, objective="val_categorical_crossentropy", max_epochs=self.epoch-60,
                               seed=50, overwrite=True)
             tuner.search(self.x_train_hot, self.y_train, shuffle=True, validation_data=(self.x_test_hot, self.y_test),
-                         epochs=self.epoch, callbacks=call_list, batch_size=5)
+                         epochs=self.epoch, callbacks=call_list_rnn, batch_size=40)
         elif mode == "cnn":
-            tuner = Hyperband(self.sequential_cnn, objective="val_categorical_crossentropy", max_epochs=self.epoch-45,
+            tuner = Hyperband(self.sequential_cnn, objective="val_categorical_crossentropy", max_epochs=self.epoch-55,
                               seed=40, overwrite=True)
             tuner.search(self.x_train_vec, self.y_train, shuffle=True, validation_data=(self.x_test_vec, self.y_test),
-                         epochs=self.epoch, callbacks=call_list, batch_size=5)
+                         epochs=self.epoch, callbacks=call_list, batch_size=40)
         elif mode == "inception":
-            tuner = Hyperband(self.inception_cnn, objective="val_categorical_crossentropy", max_epochs=self.epoch-45,
+            tuner = Hyperband(self.inception_cnn, objective="val_categorical_crossentropy", max_epochs=self.epoch-55,
                               seed=12, overwrite=True)
             tuner.search(self.x_train_vec, self.y_train, shuffle=True, validation_data=(self.x_test_vec, self.y_test),
-                         epochs=self.epoch, callbacks=call_list, batch_size=5)
+                         epochs=self.epoch, callbacks=call_list, batch_size=40)
         K.clear_session()
         return tuner
 
@@ -613,11 +614,11 @@ class DeepNetworkSearch:
         if mode != "rnn":
             history = model.fit(self.x_train_vec, self.y_train, shuffle=True,
                                 validation_data=(self.x_test_vec, self.y_test), epochs=self.epoch, callbacks=call_list,
-                                batch_size=5)
+                                batch_size=40)
         else:
             history = model.fit(self.x_train_hot, self.y_train, shuffle=True,
                                 validation_data=(self.x_test_hot, self.y_test), epochs=self.epoch, callbacks=call_list,
-                                batch_size=5)
+                                batch_size=40)
         history = pd.DataFrame(history.history)
         history.index = [f"model_{fold}" for _ in range(len(history))]
         train_pred = model.predict(x_train)
@@ -856,17 +857,17 @@ class MultiInputNetworkSearch:
         """
         Search for the best hyper parameters
         """
-        call_list = [EarlyStopping(monitor="val_loss", restore_best_weights=True, patience=30)]
+        call_list = [EarlyStopping(monitor="val_loss", restore_best_weights=True, patience=10)]
         if mode == "rnn_cnn":
-            tuner = Hyperband(self.rnn_cnn, objective="val_categorical_crossentropy", max_epochs=self.epoch-45,
+            tuner = Hyperband(self.rnn_cnn, objective="val_categorical_crossentropy", max_epochs=self.epoch-60,
                               seed=10, overwrite=True)
             tuner.search({"rnn_input": self.x_train_hot, "cnn_input": self.x_train_vec}, self.y_train, shuffle=True,
-                         validation_split=0.17, epochs=self.epoch, callbacks=call_list, batch_size=5)
+                         validation_split=0.17, epochs=self.epoch, callbacks=call_list, batch_size=40)
         elif mode == "rnn_inception":
-            tuner = Hyperband(self.rnn_inception, objective="val_categorical_crossentropy", max_epochs=self.epoch-45,
+            tuner = Hyperband(self.rnn_inception, objective="val_categorical_crossentropy", max_epochs=self.epoch-60,
                               seed=2, overwrite=True)
             tuner.search({"rnn_input": self.x_train_hot, "cnn_input": self.x_train_vec}, self.y_train, shuffle=True,
-                         validation_split=0.17, epochs=self.epoch, callbacks=call_list, batch_size=5)
+                         validation_split=0.17, epochs=self.epoch, callbacks=call_list, batch_size=40)
         K.clear_session()
         return tuner
 
@@ -904,7 +905,7 @@ class MultiInputNetworkSearch:
             os.makedirs(f"{log_folder}_{mode}")
         call_list = [EarlyStopping(monitor="val_loss", restore_best_weights=True, patience=15)]
         history = model.fit({"rnn_input": self.x_train_hot, "cnn_input": self.x_train_vec}, self.y_train,
-                            shuffle=True, epochs=self.epoch, callbacks=call_list, validation_split=0.17, batch_size=5)
+                            shuffle=True, epochs=self.epoch, callbacks=call_list, validation_split=0.17, batch_size=40)
         history = pd.DataFrame(history.history)
         history.index = [f"model_{fold}" for _ in range(len(history))]
         # concatenate both metrics
