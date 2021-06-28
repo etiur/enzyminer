@@ -1210,12 +1210,12 @@ def plotting(history, plot_dir="metrics_plot", mode="cnn", fold=1):
 
     acc = history['accuracy']
     val_acc = history['val_accuracy']
-    loss = history['loss'][1:]
-    val_loss = history['val_loss'][1:]
-    entropy = history["categorical_crossentropy"][1:]
-    val_entropy = history["val_categorical_crossentropy"][1:]
+    loss = history['loss'][3:]
+    val_loss = history['val_loss'][3:]
+    entropy = history["categorical_crossentropy"][3:]
+    val_entropy = history["val_categorical_crossentropy"][3:]
     epochs = range(1, len(acc) + 1)
-    epochs_loss = range(2, len(acc) + 1)
+    epochs_loss = range(4, len(acc) + 1)
     plt.plot(epochs, acc, 'ro', label='Training acc')
     plt.plot(epochs, val_acc, 'b', label='Validation acc')
     plt.xlabel('epochs')
