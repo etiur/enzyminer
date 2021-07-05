@@ -7,7 +7,7 @@ from subprocess import Popen
 import time
 import pandas as pd
 import glob
-from os.path import basename
+from os.path import basename, dirname
 from multiprocessing import Pool
 
 
@@ -24,7 +24,7 @@ def arg_parse():
     parser.add_argument("-po", "--possum_out", required=False, help="The directory for the possum extractions",
                         default="/gpfs/projects/bsc72/ruite/feature_extraction/power9/possum")
     parser.add_argument("-fo", "--filtered_out", required=False, help="The directory for the filtered features",
-                        default="/gpfs/home/bsc72/bsc72661/feature_extraction/filtered_features")
+                        default="/gpfs/projects/bsc72/ruite/feature_extraction/power9/filtered_features")
     parser.add_argument("-on", "--filter_only", required=False, help="true if you already have the features",
                         action="store_true")
     parser.add_argument("-fl", "--file", required=False, help="The file to restart the extraction with")
@@ -32,12 +32,14 @@ def arg_parse():
                         action="store_true")
     parser.add_argument("-r", "--run", required=False, choices=("possum", "ifeature", "both"), default="both",
                         help="run possum or ifeature extraction")
-    parser.add_argument("-n", "--num_thread", required=False, default=12, type=int,
+    parser.add_argument("-n", "--num_thread", required=False, default=100, type=int,
+                        help="The number of threads to use for the generation of pssm profiles")
+    parser.add_argument("-n", "--num_thread", required=False, default=100, type=int,
                         help="The number of threads to use for the generation of pssm profiles")
     args = parser.parse_args()
 
     return [args.fasta_file, args.pssm_dir, args.fasta_dir, args.ifeature, args.possum, args.ifeature_out,
-            args.possum_out, args.filtered_out, args.filter_only, args.file, args.long, args.run]
+            args.possum_out, args.filtered_out, args.filter_only, args.file, args.long, args.run, args.num_thread]
 
 
 class ExtractFeatures:
@@ -69,7 +71,7 @@ class ExtractFeatures:
         """
         self.fasta_file = fasta_file
         if len(self.fasta_file.split("/")) > 1:
-            self.base = os.path.dirname(self.fasta_file)
+            self.base = dirname(self.fasta_file)
         else:
             self.base = "."
         if not pssm_dir:
@@ -115,8 +117,7 @@ class ExtractFeatures:
         num: int
             The number of files to separate the original fasta_file
         """
-        base = basename(self.fasta_file)
-        with open(f"{base}/no_short.fasta") as inp:
+        with open(f"{self.base}/no_short.fasta") as inp:
             record = SeqIO.parse(inp, "fasta")
             record_list = list(record)
             if len(record_list) > 10_000:
@@ -357,7 +358,7 @@ class ReadFeatures:
     """
     def __init__(self, fasta_file, ifeature_out="/gpfs/projects/bsc72/ruite/feature_extraction/power9/ifeature",
                  possum_out="/gpfs/projects/bsc72/ruite/feature_extraction/power9/possum",
-                 filtered_out="/gpfs/home/bsc72/bsc72661/feature_extraction/filtered_features"):
+                 filtered_out="/gpfs/projects/bsc72/ruite/feature_extraction/power9/filtered_features"):
         """
         Initialize the class ReadFeatures
 
@@ -395,11 +396,11 @@ class ReadFeatures:
         comp_space_aa_group_pairs = pd.concat(comp_space_aa_group_pairs)
         distribution = [pd.read_csv(f"{self.ifeature_out}/CTDD_{i+1}.tsv", sep="\t", index_col=0) for i in range(length)]
         distribution = pd.concat(distribution)
-        list_geary = [pd.read_csv(f"{self.ifeature_out}/Geary_{i+1}.tsv", sep="\t", index_col=0) for i in range(length)]
-        geary = pd.concat(list_geary)
+        geary = [pd.read_csv(f"{self.ifeature_out}/Geary_{i+1}.tsv", sep="\t", index_col=0) for i in range(length)]
+        geary = pd.concat(geary)
         geary.columns = [f"{x}_geary" for x in geary.columns]
-        list_moran = [pd.read_csv(f"{self.ifeature_out}/Moran_{i+1}.tsv", sep="\t", index_col=0) for i in range(length)]
-        moran = pd.concat(list_moran)
+        moran = [pd.read_csv(f"{self.ifeature_out}/Moran_{i+1}.tsv", sep="\t", index_col=0) for i in range(length)]
+        moran = pd.concat(moran)
         moran.columns = [f"{x}_moran" for x in moran.columns]
         # concat the features
         all_data = pd.concat([amphy, geary, moran, comp_space_aa_group_pairs, distribution], axis=1)
@@ -415,7 +416,7 @@ class ReadFeatures:
             An array of the indices for the possum features
         """
         # reads features of possum
-        dp_pssm = [pd.read_csv(f"{self.possum_out}/dp_pssm_{i+1}.csv") for i in range(length)]
+        dp_pssm = [pd.read_csv(f"{self.possum_out}/dp_pssm_{i+1}.csv", chunksize=3_000) for i in range(length)]
         dp_pssm = pd.concat(dp_pssm)
         dp_pssm.index = ID
         pssm_cc = [pd.read_csv(f"{self.possum_out}/pssm_cc_{i+1}.csv") for i in range(length)]
@@ -474,17 +475,25 @@ class ReadFeatures:
         if not os.path.exists(self.filtered_out):
             os.makedirs(self.filtered_out)
         # write the new features to csv
-        features_svc = self.features[svc.columns]
-        features_knn = self.features[knn.columns]
-        features_svc.to_csv(f"{self.filtered_out}/svc_features.csv", columns=features_svc.columns)
-        features_knn.to_csv(f"{self.filtered_out}/knn_features.csv", columns=features_knn.columns)
+        svc_columns = list(svc.columns)
+        svc_columns[1] = svc_columns[0]
+        svc_columns[3] = svc_columns[2]
+        knn_columns = list(knn.columns)
+        knn_columns[3] = knn_columns[0]
+        knn_columns[2] = knn_columns[1]
+        knn_columns[6] = knn_columns[4]
+        knn_columns[9] = knn_columns[5]
+        features_svc = self.features[svc_columns]
+        features_knn = self.features[knn_columns]
+        features_svc.to_csv(f"{self.filtered_out}/svc_features.csv", header=True)
+        features_knn.to_csv(f"{self.filtered_out}/knn_features.csv", header=True)
 
 
 def extract_and_filter(fasta_file=None, pssm_dir=None, fasta_dir=None, ifeature=None, possum=None,
                        ifeature_out="/gpfs/projects/bsc72/ruite/feature_extraction/power9/ifeature",
                        possum_out="/gpfs/projects/bsc72/ruite/feature_extraction/power9/possum",
-                       filtered_out="/gpfs/home/bsc72/bsc72661/feature_extraction/filtered_features",
-                       filter_only=False, restart=None, long=False, thred=10, run="both"):
+                       filtered_out="/gpfs/projects/bsc72/ruite/feature_extraction/power9/filtered_features",
+                       filter_only=False, restart=None, long=False, thread=100, run="both"):
     """
     A function to extract and filter the features
 
@@ -513,7 +522,7 @@ def extract_and_filter(fasta_file=None, pssm_dir=None, fasta_dir=None, ifeature=
     """
     # Feature extraction
     if not filter_only:
-        extract = ExtractFeatures(fasta_file, pssm_dir, fasta_dir, ifeature, ifeature_out, possum, possum_out, thred,
+        extract = ExtractFeatures(fasta_file, pssm_dir, fasta_dir, ifeature, ifeature_out, possum, possum_out, thread,
                                   run)
         extract.run_extraction_parallel(restart, long)
 
@@ -524,9 +533,9 @@ def extract_and_filter(fasta_file=None, pssm_dir=None, fasta_dir=None, ifeature=
 
 def main():
     fasta_file, pssm_dir, fasta_dir, ifeature, possum, ifeature_out, possum_out, filtered_out, filter_only, \
-    file, long, run = arg_parse()
+    file, long, run, num_thread = arg_parse()
     extract_and_filter(fasta_file, pssm_dir, fasta_dir, ifeature, possum, ifeature_out, possum_out, filtered_out,
-                       filter_only, file, long, run)
+                       filter_only, file, long, num_thread, run)
 
 
 if __name__ == "__main__":

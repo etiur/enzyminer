@@ -4,15 +4,12 @@ import argparse
 import os
 import glob
 from os import path
-from os.path import basename, dirname
+from os.path import basename
 from Bio import SeqIO
-from mpi4py import MPI, futures
 from Bio.SeqIO import FastaIO
 import time
 import logging
-from subprocess import call
-import shlex
-from multiprocessing import Process
+from multiprocessing import Process, Pool
 
 
 def arg_parse():
@@ -22,16 +19,15 @@ def arg_parse():
     parser.add_argument("-d", "--dbdir", required=False, help="The directory for the database")
     parser.add_argument("-di", "--dbinp", required=False, help="The path to the fasta files to create the database")
     parser.add_argument("-do", "--dbout", required=False, help="The name for the created database")
-    parser.add_argument("-n", "--num_thread", required=False, default=10, type=int,
+    parser.add_argument("-n", "--num_thread", required=False, default=100, type=int,
                         help="The number of threads to use for the generation of pssm profiles")
     parser.add_argument("-i", "--fasta_file", required=False, help="The fasta file")
-    parser.add_argument("-m", "--mpi", required=False, help="true if using mpi to parallelize", action="store_true")
     parser.add_argument("-PO", "--possum", required=False, help="A path to the possum programme")
     parser.add_argument("-num", "--number", required=False, help="a number for the files", default="*")
     args = parser.parse_args()
 
     return [args.fasta_file, args.fasta_dir, args.pssm_dir, args.dbdir, args.dbinp, args.dbout, args.num_thread,
-            args.mpi, args.possum, args.number]
+            args.possum, args.number]
 
 
 class ExtractPssm:
@@ -99,16 +95,6 @@ class ExtractPssm:
 
         return stdout_db, stderr_db
 
-    def clean_fasta(self):
-        """
-        Clean the fasta file
-        """
-        base = dirname(self.fasta_file)
-        illegal = f"perl {self.possum}/removeIllegalSequences.pl -i {self.fasta_file} -o {base}/no_illegal.fasta"
-        short = f"perl {self.possum}/removeShortSequences.pl -i {base}/no_illegal.fasta -o {base}/no_short.fasta -n 100"
-        call(shlex.split(illegal), close_fds=False)
-        call(shlex.split(short), close_fds=False)
-
     def separate_single(self):
         """
         A function that separates the fasta files into individual files
@@ -118,7 +104,6 @@ class ExtractPssm:
         file: iterator
             An iterator that stores the single-record fasta files
         """
-        self.clean_fasta()
         base = basename(self.fasta_file)
         with open(f"{base}/no_short.fasta") as inp:
             record = SeqIO.parse(inp, "fasta")
@@ -183,26 +168,23 @@ class ExtractPssm:
         for files in file:
             self.generate(files)
 
-    def mpi_parallel(self):
+    def parallel(self):
         """
         A function that run the generate function in parallel
         """
-        com = MPI.COMM_WORLD
-        p = com.Get_size()
-        logging.basicConfig(filename="time.log")
         if self.fasta_file:
             self.separate_single()
         start = time.time()
         # Using the MPI to parallelize
-        with futures.MPICommExecutor() as executor:
-            file = glob.glob(f"{self.fasta_dir}/*.fsa")
+        file = glob.glob(f"{self.fasta_dir}/*.fsa")
+        with Pool(processes=self.num_thread*5) as executor:
             executor.map(self.generate, file)
         end = time.time()
         logging.info(f"it took {end-start} to finish all the files")
 
 
 def generate_pssm(fasta=None, num_threads=10, fasta_dir=None, pssm_dir=None, dbdir=None, dbinp=None, dbout=None,
-                  mpi=False, possum=None, num="*"):
+                  possum=None, num="*"):
     """
     A function that creates protein databases, generates the pssms and returns the list of files
 
@@ -226,15 +208,12 @@ def generate_pssm(fasta=None, num_threads=10, fasta_dir=None, pssm_dir=None, dbd
     pssm = ExtractPssm(fasta, num_threads, fasta_dir, pssm_dir, dbdir, dbinp, dbout, possum)
     if dbinp and dbout:
         pssm.makedata()
-    if not mpi:
-        pssm.run_generate(num)
-    else:
-        pssm.mpi_parallel()
+    pssm.run_generate(num)
 
 
 def main():
-    fasta_file, fasta_dir, pssm_dir, dbdir, dbinp, dbout, num_thread, mpi, possum, num = arg_parse()
-    generate_pssm(fasta_file, num_thread, fasta_dir, pssm_dir, dbdir, dbinp, dbout, mpi, possum, num)
+    fasta_file, fasta_dir, pssm_dir, dbdir, dbinp, dbout, num_thread, possum, num = arg_parse()
+    generate_pssm(fasta_file, num_thread, fasta_dir, pssm_dir, dbdir, dbinp, dbout, possum, num)
 
 
 if __name__ == "__main__":
