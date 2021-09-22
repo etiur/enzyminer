@@ -19,7 +19,7 @@ def arg_parse():
     parser.add_argument("-id", "--ifeature_dir", required=False, help="Path to the iFeature programme folder",
                         default="/gpfs/projects/bsc72/ruite/enzyminer/iFeature")
     parser.add_argument("-Po", "--possum_dir", required=False, help="A path to the possum programme",
-                        default="/gpfs/home/bsc72/bsc72661/feature_extraction/POSSUM_Toolkit/")
+                        default="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/")
     parser.add_argument("-io", "--ifeature_out", required=False, help="The directory where the ifeature features are",
                         default="ifeature_features")
     parser.add_argument("-po", "--possum_out", required=False, help="The directory for the possum extractions",
@@ -53,7 +53,7 @@ def arg_parse():
     parser.add_argument("-r", "--run", required=False, choices=("possum", "ifeature", "both"), default="both",
                         help="run possum or ifeature extraction")
     parser.add_argument("-st", "--start", required=False, type=int, help="The starting number", default=1)
-    parser.add_argument("-en", "--end", required=False, type=int, help="The ending number")
+    parser.add_argument("-en", "--end", required=False, type=int, help="The ending number, not included")
     parser.add_argument("-run, --run_path", required=False, help="The folder to keep the run files for generating pssm",
                         default="run_files")
     args = parser.parse_args()
@@ -68,7 +68,7 @@ def arg_parse():
 class WriteSh:
     def __init__(self, fasta=None, fasta_dir="fasta_files", pssm_dir="pssm", num_threads=100, dbinp=None, dbout=None,
                  dbdir="/gpfs/home/bsc72/bsc72661/feature_extraction/database", run_path="run_files",
-                 possum_dir="/gpfs/home/bsc72/bsc72661/feature_extraction/POSSUM_Toolkit/"):
+                 possum_dir="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/"):
         """
         Initialize the ExtractPssm class
 

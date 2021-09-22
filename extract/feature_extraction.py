@@ -21,7 +21,7 @@ def arg_parse():
     parser.add_argument("-id", "--ifeature_dir", required=False, help="Path to the iFeature programme folder",
                         default="/gpfs/projects/bsc72/ruite/enzyminer/iFeature")
     parser.add_argument("-Po", "--possum_dir", required=False, help="A path to the possum programme",
-                        default="/gpfs/home/bsc72/bsc72661/feature_extraction/POSSUM_Toolkit/")
+                        default="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/")
     parser.add_argument("-io", "--ifeature_out", required=False, help="The directory where the ifeature features are",
                         default="ifeature_features")
     parser.add_argument("-po", "--possum_out", required=False, help="The directory for the possum extractions",
@@ -51,7 +51,7 @@ class ExtractFeatures:
 
     def __init__(self, fasta_file, pssm_dir="pssm", fasta_dir="fasta_files", ifeature_out="ifeature_features",
                  possum_out="possum_features", ifeature_dir="/gpfs/projects/bsc72/ruite/enzyminer/iFeature",
-                 thread=12, run="both", possum_dir="/gpfs/home/bsc72/bsc72661/feature_extraction/POSSUM_Toolkit"):
+                 thread=12, run="both", possum_dir="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit"):
         """
         Initialize the ExtractFeatures class
 
