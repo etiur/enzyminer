@@ -73,7 +73,7 @@ class ExtractFeatures:
             A directory for the extraction results from possum
         """
         self.fasta_file = fasta_file
-        if len(self.fasta_file.split("/")) > 1:
+        if dirname(self.fasta_file) != "":
             self.base = dirname(self.fasta_file)
         else:
             self.base = "."
