@@ -109,8 +109,8 @@ class WriteSh:
             base = dirname(self.fasta_file)
         else:
             base = "."
-        illegal = f"perl {self.possum}/removeIllegalSequences.pl -i {self.fasta_file} -o {base}/no_illegal.fasta"
-        short = f"perl {self.possum}/removeShortSequences.pl -i {base}/no_illegal.fasta -o {base}/no_short.fasta -n 100"
+        illegal = f"perl {self.possum}/utils/removeIllegalSequences.pl -i {self.fasta_file} -o {base}/no_illegal.fasta"
+        short = f"perl {self.possum}/utils/removeShortSequences.pl -i {base}/no_illegal.fasta -o {base}/no_short.fasta -n 100"
         call(shlex.split(illegal), close_fds=False)
         call(shlex.split(short), close_fds=False)
 
