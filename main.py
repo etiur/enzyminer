@@ -125,7 +125,10 @@ class WriteSh:
         file: iterator
             An iterator that stores the single-record fasta files
         """
-        base = dirname(self.fasta_file)
+        if dirname(self.fasta_file) != "":
+            base = dirname(self.fasta_file)
+        else:
+            base = "."
         with open(f"{base}/no_short.fasta") as inp:
             record = SeqIO.parse(inp, "fasta")
             count = 1
