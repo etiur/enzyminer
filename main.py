@@ -54,7 +54,7 @@ def arg_parse():
                         help="run possum or ifeature extraction")
     parser.add_argument("-st", "--start", required=False, type=int, help="The starting number", default=1)
     parser.add_argument("-en", "--end", required=False, type=int, help="The ending number, not included")
-    parser.add_argument("-rp", "--sbatch_path", required=False, help="The folder to keep the run files for generating pssm",
+    parser.add_argument("-sp", "--sbatch_path", required=False, help="The folder to keep the run files for generating pssm",
                         default="run_files")
     args = parser.parse_args()
 
