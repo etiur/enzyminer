@@ -32,13 +32,16 @@ def arg_parse():
                         help="The number of threads to use for the generation of pssm profiles")
     parser.add_argument("-d", "--dbdir", required=False, help="The directory for the database",
                         default="/gpfs/home/bsc72/bsc72661/feature_extraction/database")
-    parser.add_argument("-ps", "--positive_sequences", required=False, defalut="positive.fasta",
+    parser.add_argument("-ps", "--positive_sequences", required=False,
+                        default="results/positive.fasta",
                         help="The name for the fasta file with the positive sequences")
-    parser.add_argument("-ns", "--negative_sequences", required=False, defalut="negative.fasta",
+    parser.add_argument("-ns", "--negative_sequences", required=False,
+                        default="results/negative.fasta",
                         help="The name for the fasta file with negative sequences")
     parser.add_argument("-nss", "--number_similar_samples", required=False, default=1, type=int,
                         help="The number of similar training samples to filter the predictions")
-    parser.add_argument("-c", "--csv_name", required=False, defalut="common_doamin.csv",
+    parser.add_argument("-c", "--csv_name", required=False,
+                        default="results/common_doamin.csv",
                         help="The name of the csv file for the ensemble prediction")
     parser.add_argument("-re", "--restart", required=False, choices=("pssm", "feature", "predict"),
                         help="From which part of the process to restart with")
@@ -157,9 +160,9 @@ def main():
     elif restart == "feature":
         extract_and_filter(fasta_file, pssm_dir, fasta_dir, ifeature_out, possum_dir, ifeature_dir, possum_out,
                            filtered_out, filter_only, extraction_restart, long, num_thread, run)
-        vote_and_filter(filtered_out, fasta_file, csv_name, min_num, positive, negative)
+        vote_and_filter(filtered_out, fasta_file, min_num, csv_name, positive, negative)
     elif restart == "predict":
-        vote_and_filter(filtered_out, fasta_file, csv_name, min_num, positive, negative)
+        vote_and_filter(filtered_out, fasta_file, min_num, csv_name, positive, negative)
 
     
 if __name__ == "__main__":

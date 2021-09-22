@@ -22,7 +22,7 @@ def arg_parse():
                         default="/gpfs/projects/bsc72/ruite/enzyminer/iFeature")
     parser.add_argument("-Po", "--possum_dir", required=False, help="A path to the possum programme",
                         default="/gpfs/home/bsc72/bsc72661/feature_extraction/POSSUM_Toolkit/")
-    parser.add_argument("-if", "--ifeature_out", required=False, help="The directory where the ifeature features are",
+    parser.add_argument("-io", "--ifeature_out", required=False, help="The directory where the ifeature features are",
                         default="ifeature_features")
     parser.add_argument("-po", "--possum_out", required=False, help="The directory for the possum extractions",
                         default="possum_features")

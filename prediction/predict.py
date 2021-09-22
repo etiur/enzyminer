@@ -14,26 +14,21 @@ def arg_parse():
     # Argument parsers
     parser = argparse.ArgumentParser(description="Make predictions")
     # main required arguments
-    parser.add_argument("-fo", "--feature_out", required=False,
-                        help="Include the directory path where the features are stored",
-                        default="/gpfs/projects/bsc72/ruite/feature_extraction/power9/filtered_features")
+    parser.add_argument("-fo", "--filtered_out", required=False, help="The directory for the filtered features",
+                        default="filtered_features")
     parser.add_argument("-nss", "--number_similar_samples", required=False, default=1, type=int,
                         help="The number of similar training samples to filter the predictions")
     parser.add_argument("-c", "--csv_name", required=False,
-                        default="/gpfs/home/bsc72/bsc72661/feature_extraction/results/common_doamin.csv",
+                        default="results/common_doamin.csv",
                         help="The name of the csv file for the ensemble prediction")
-    parser.add_argument("-if", "--input_fasta", required=False,
-                        default="/gpfs/home/bsc72/bsc72661/feature_extraction/data/large.fasta",
-                        help="The name of the input fasta file")
+    parser.add_argument("-i", "--fasta_file", help="The fasta file path")
     parser.add_argument("-ps", "--positive_sequences", required=False,
-                        default="/gpfs/home/bsc72/bsc72661/feature_extraction/results/positive.fasta",
-                        help="The name for the fasta file with the positive sequences")
+                        default="results/positive.fasta", help="The name for the fasta file with the positive sequences")
     parser.add_argument("-ns", "--negative_sequences", required=False,
-                        default="/gpfs/home/bsc72/bsc72661/feature_extraction/results/negative.fasta",
-                        help="The name for the fasta file with negative sequences")
+                        default="results/negative.fasta", help="The name for the fasta file with negative sequences")
     args = parser.parse_args()
 
-    return [args.feature_out, args.number_similar_samples, args.csv_name, args.input_fasta, args.positive_sequences,
+    return [args.filtered_out, args.number_similar_samples, args.csv_name, args.fasta_file, args.positive_sequences,
             args.negative_sequences]
 
 
@@ -42,7 +37,7 @@ class EnsembleVoting:
     A class to perform ensemble voting
     """
 
-    def __init__(self, feature_out="/gpfs/projects/bsc72/ruite/feature_extraction/power9/filtered_features"):
+    def __init__(self, feature_out="filtered_features"):
         """
         Initialize the class EnsembleVoting
 
@@ -52,8 +47,8 @@ class EnsembleVoting:
             The path to the directory where the new extracted feature files are
         """
         self.filtered_out = feature_out
-        self.learning = "/gpfs/home/bsc72/bsc72661//feature_extraction/data/esterase_binary.xlsx"
-        self.models = "/gpfs/home/bsc72/bsc72661/feature_extraction/models"
+        self.learning = "/gpfs/projects/bsc72/ruite/enzyminer/data/esterase_binary.xlsx"
+        self.models = "/gpfs/projects/bsc72/ruite/enzyminer/models"
 
     def scale_transform(self, file_path, feature_set):
         """
@@ -244,8 +239,7 @@ class ApplicabilityDomain():
 
         return self.n_insiders
 
-    def filter(self, prediction, index, min_num=1,
-               path_name="/gpfs/home/bsc72/bsc72661/feature_extraction/results/filtered_predictions.csv"):
+    def filter(self, prediction, index, min_num=1, path_name="filtered_predictions.csv"):
         """
         Filter those predictions that has less than min_num training samples that are within the AD
         prediction: array
@@ -268,12 +262,11 @@ class ApplicabilityDomain():
         self.pred.to_csv(path_name, header=True)
         return self.pred
 
-    def extract(self, test_fasta, pred=None,
-                positive_fasta="/gpfs/home/bsc72/bsc72661/feature_extraction/results/positive.fasta",
-                negative_fasta="/gpfs/home/bsc72/bsc72661/feature_extraction/results/negative.fasta"):
+    def extract(self, fasta_file, pred=None, positive_fasta="results/positive.fasta",
+                negative_fasta="results/negative.fasta"):
         """
         A function to extract those test fasta sequences that passed the filter
-        test_fasta: str
+        fasta_file: str
             The path to the test fasta sequences
         pred: pandas Dataframe, optional
             Predictions
@@ -285,7 +278,7 @@ class ApplicabilityDomain():
         if pred is not None:
             self.pred = pred
         # separating the records according to if the prediction is positive or negative
-        with open(test_fasta) as inp:
+        with open(f"{dirname(fasta_file)}/no_short.fasta") as inp:
             record = SeqIO.parse(inp, "fasta")
             p = 0
             positive = []
@@ -316,10 +309,8 @@ class ApplicabilityDomain():
             fasta_neg.write_file(negative)
 
 
-def vote_and_filter(feature_out, input_fasta, min_num=1,
-                    csv_name="/gpfs/home/bsc72/bsc72661/feature_extraction/results/common_doamin.csv",
-                    positive="/gpfs/home/bsc72/bsc72661/feature_extraction/results/positive.fasta",
-                    negative="/gpfs/home/bsc72/bsc72661/feature_extraction/results/negative.fasta"):
+def vote_and_filter(feature_out, fasta_file, min_num=1,  csv_name="results/common_doamin.csv",
+                    positive="results/positive.fasta", negative="results/negative.fasta"):
     """
     A class that predicts and then filter the results based on the applicability domain of the model
 
@@ -327,7 +318,7 @@ def vote_and_filter(feature_out, input_fasta, min_num=1,
     ___________
     feature_out: str,
         Path to the directory of the newly generated feature files
-    input_fasta: str
+    fasta_file: str
         The path to the test fasta sequences
     csv_name: str, optional
         The name for the ensemble prediction file
@@ -338,6 +329,13 @@ def vote_and_filter(feature_out, input_fasta, min_num=1,
     negative_fasta
         The new filtered fasta file with negative sequences
     """
+    if not os.path.exists(dirname(csv_name)):
+        os.makedirs(dirname(csv_name))
+    if not os.path.exists(dirname(negative)):
+        os.makedirs(dirname(negative))
+    if not os.path.exists(dirname(positive)):
+        os.makedirs(dirname(positive))
+
     ensemble = EnsembleVoting(feature_out)
     # predictions
     svc, ridge, knn, new_svc, X_svc, new_knn, X_knn = ensemble.predicting()
@@ -350,27 +348,24 @@ def vote_and_filter(feature_out, input_fasta, min_num=1,
     domain_svc = ApplicabilityDomain()
     domain_svc.fit(X_svc)
     domain_svc.predict(new_svc)
-    pred_svc = domain_svc.filter(all_voting, all_index, min_num,
-                                 "/gpfs/home/bsc72/bsc72661/feature_extraction/results/svc_domain.csv")
+    pred_svc = domain_svc.filter(all_voting, all_index, min_num, f"{dirname(positive)}/svc_domain.csv")
 
     domain_knn = ApplicabilityDomain()
     domain_knn.fit(X_knn)
     domain_knn.predict(new_knn)
-    pred_knn = domain_knn.filter(all_voting, all_index,  min_num,
-                                 "/gpfs/home/bsc72/bsc72661/feature_extraction/results/knn_domain.csv")
+    pred_knn = domain_knn.filter(all_voting, all_index,  min_num, f"{dirname(positive)}/knn_domain.csv")
 
-    if not os.path.exists(dirname(csv_name)):
-        os.makedirs(dirname(csv_name))
+    # a common dommain for both
     name_set = set(pred_svc.index).intersection(pred_knn.index)
     name_set = sorted(name_set, key=lambda x: int(x.split("_")[1]))
     common_domain = pred_svc.loc[name_set]
     common_domain.to_csv(csv_name, header=True)
-    domain_knn.extract(input_fasta, common_domain, positive, negative)
+    domain_knn.extract(fasta_file, common_domain, positive, negative)
 
 
 def main():
-    feature_out, min_num, csv_name, input_fasta, positive, negative = arg_parse()
-    vote_and_filter(feature_out, input_fasta, min_num, csv_name, positive, negative)
+    feature_out, min_num, csv_name, fasta_file, positive, negative = arg_parse()
+    vote_and_filter(feature_out, fasta_file, min_num, csv_name, positive, negative)
 
 
 if __name__ == "__main__":

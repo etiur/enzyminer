@@ -58,17 +58,9 @@ class ExtractPssm:
         dbout: str, optional
             The name of the created databse database
         """
-        self.fasta_file = fasta
-        if not fasta_dir:
-            self.fasta_dir = dirname(self.fasta_file)
-        else:
-            self.fasta_dir = fasta_dir
         self.pssm = pssm_dir
         self.fasta_file = fasta
-        if not fasta_dir:
-            self.fasta_dir = dirname(self.fasta_file)
-        else:
-            self.fasta_dir = fasta_dir
+        self.fasta_dir = fasta_dir
         self.pssm = pssm_dir
         self.dbinp = dbinp
         self.dbdir = dbdir
