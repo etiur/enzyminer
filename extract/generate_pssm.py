@@ -94,7 +94,7 @@ class ExtractPssm:
         base = dirname(self.fasta_file)
         with open(f"{base}/no_short.fasta") as inp:
             record = SeqIO.parse(inp, "fasta")
-            count = 0
+            count = 1
             # write the record into new fasta files
             for seq in record:
                 with open(f"{self.fasta_dir}/seq_{count}.fsa", "w") as split:

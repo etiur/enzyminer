@@ -52,7 +52,7 @@ def arg_parse():
                         action="store_true")
     parser.add_argument("-r", "--run", required=False, choices=("possum", "ifeature", "both"), default="both",
                         help="run possum or ifeature extraction")
-    parser.add_argument("-st", "--start", required=False, type=int, help="The starting number")
+    parser.add_argument("-st", "--start", required=False, type=int, help="The starting number", default=1)
     parser.add_argument("-en", "--end", required=False, type=int, help="The ending number")
     parser.add_argument("-run, --run_path", required=False, help="The folder to keep the run files for generating pssm",
                         default="run_files")
@@ -137,7 +137,7 @@ class WriteSh:
 
         return f"{self.run_path}/pssm_{nums}.sh"
 
-    def write_all(self, start=None, end=None):
+    def write_all(self, start=1, end=None):
         if start and end:
             for num in range(start, end):
                 pssm = self.write(num)
