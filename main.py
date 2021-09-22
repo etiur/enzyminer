@@ -54,14 +54,14 @@ def arg_parse():
                         help="run possum or ifeature extraction")
     parser.add_argument("-st", "--start", required=False, type=int, help="The starting number", default=1)
     parser.add_argument("-en", "--end", required=False, type=int, help="The ending number, not included")
-    parser.add_argument("-rp, --run_path", required=False, help="The folder to keep the run files for generating pssm",
+    parser.add_argument("-rp, --sbatch_path", required=False, help="The folder to keep the run files for generating pssm",
                         default="run_files")
     args = parser.parse_args()
 
     return [args.fasta_file, args.pssm_dir, args.fasta_dir, args.ifeature_dir, args.possum_dir, args.ifeature_out,
             args.possum_out, args.filtered_out, args.dbdir, args.dbinp, args.dbout, args.num_thread,
             args.number_similar_samples, args.csv_name, args.positive_sequences, args.negative_sequences, args.restart,
-            args.filter_only, args.extraction_restart, args.long, args.run, args.start, args.end, args.run_path]
+            args.filter_only, args.extraction_restart, args.long, args.run, args.start, args.end, args.sbatch_path]
 
 
 class WriteSh:
@@ -148,15 +148,15 @@ class WriteSh:
 
 
 def main():
-    fasta_file, pssm_dir, fasta_dir, ifeature_dir, possum_dir, ifeature_out, possum_out, filtered_out, dbdir, dbinp, dbout, \
-    num_thread, min_num, csv_name, positive, negative, restart, filter_only, extraction_restart, long, \
-    run, start, end, run_path = arg_parse()
+    fasta_file, pssm_dir, fasta_dir, ifeature_dir, possum_dir, ifeature_out, possum_out, filtered_out, dbdir, dbinp, \
+    dbout, num_thread, min_num, csv_name, positive, negative, restart, filter_only, extraction_restart, long, \
+    run, start, end, sbatch_path = arg_parse()
     if not restart:
-        sh = WriteSh(fasta_file, fasta_dir, pssm_dir, num_thread, dbinp, dbout, dbdir, run_path, possum_dir)
+        sh = WriteSh(fasta_file, fasta_dir, pssm_dir, num_thread, dbinp, dbout, dbdir, sbatch_path, possum_dir)
         sh.clean_fasta()
         sh.write_all(start, end)
     elif restart == "pssm":
-        files = glob.glob(f"{run_path}/pssm_*.sh")
+        files = glob.glob(f"{sbatch_path}/pssm_*.sh")
         for file in files:
             os.system(f"sbatch {file}")
     elif restart == "feature":
