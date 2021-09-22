@@ -12,18 +12,26 @@ import shlex
 def arg_parse():
     parser = argparse.ArgumentParser(description="extract features using possum and ifeatures")
     parser.add_argument("-i", "--fasta_file", help="The fasta file path")
-    parser.add_argument("-p", "--pssm_dir", help="The pssm files directory's path")
-    parser.add_argument("-f", "--fasta_dir", required=False, help="The directory for the fasta files")
-    parser.add_argument("-if", "--ifeature", required=False, help="Path to the iFeature programme")
-    parser.add_argument("-Po", "--possum", required=False, help="A path to the possum programme")
-    parser.add_argument("-ifo", "--ifeature_out", required=False, help="The directory for the ifeature extractions")
-    parser.add_argument("-op", "--possum_out", required=False, help="The directory for the possum extractions")
-    parser.add_argument("-fo", "--filtered_out", required=False, help="The directory for the filtered features")
+    parser.add_argument("-p", "--pssm_dir", help="The pssm files directory's path", required=False,
+                        default="pssm")
+    parser.add_argument("-f", "--fasta_dir", required=False, help="The directory for the fasta files",
+                        default="fasta_files")
+    parser.add_argument("-id", "--ifeature_dir", required=False, help="Path to the iFeature programme folder",
+                        default="/gpfs/projects/bsc72/ruite/enzyminer/iFeature")
+    parser.add_argument("-Po", "--possum_dir", required=False, help="A path to the possum programme",
+                        default="/gpfs/home/bsc72/bsc72661/feature_extraction/POSSUM_Toolkit/")
+    parser.add_argument("-io", "--ifeature_out", required=False, help="The directory where the ifeature features are",
+                        default="ifeature_features")
+    parser.add_argument("-po", "--possum_out", required=False, help="The directory for the possum extractions",
+                        default="possum_features")
+    parser.add_argument("-fo", "--filtered_out", required=False, help="The directory for the filtered features",
+                        default="filtered_features")
     parser.add_argument("-di", "--dbinp", required=False, help="The path to the fasta files to create the database")
     parser.add_argument("-do", "--dbout", required=False, help="The name for the created database")
     parser.add_argument("-n", "--num_thread", required=False, default=100, type=int,
                         help="The number of threads to use for the generation of pssm profiles")
-    parser.add_argument("-d", "--dbdir", required=False, help="The directory for the database")
+    parser.add_argument("-d", "--dbdir", required=False, help="The directory for the database",
+                        default="/gpfs/home/bsc72/bsc72661/feature_extraction/database")
     parser.add_argument("-ps", "--positive_sequences", required=False, defalut="positive.fasta",
                         help="The name for the fasta file with the positive sequences")
     parser.add_argument("-ns", "--negative_sequences", required=False, defalut="negative.fasta",
@@ -36,7 +44,7 @@ def arg_parse():
                         help="From which part of the process to restart with")
     parser.add_argument("-on", "--filter_only", required=False, help="true if you already have the features",
                         action="store_true")
-    parser.add_argument("-fl", "--file", required=False, help="The file to restart the extraction of features with")
+    parser.add_argument("-er", "--extraction_restart", required=False, help="The file to restart the extraction with")
     parser.add_argument("-lg", "--long", required=False, help="true you have to restart from the long commands",
                         action="store_true")
     parser.add_argument("-r", "--run", required=False, choices=("possum", "ifeature", "both"), default="both",
@@ -47,15 +55,17 @@ def arg_parse():
                         default="run_files")
     args = parser.parse_args()
 
-    return [args.fasta_file, args.pssm_dir, args.fasta_dir, args.ifeature, args.possum, args.ifeature_out,
+    return [args.fasta_file, args.pssm_dir, args.fasta_dir, args.ifeature_dir, args.possum_dir, args.ifeature_out,
             args.possum_out, args.filtered_out, args.dbdir, args.dbinp, args.dbout, args.num_thread,
             args.number_similar_samples, args.csv_name, args.positive_sequences, args.negative_sequences, args.restart,
-            args.ifeature_feature, args.filter_only, args.file, args.long, args.run, args.start, args.end, args.run_path]
+            args.ifeature_feature, args.filter_only, args.extraction_restart, args.long, args.run, args.start, args.end,
+            args.run_path]
 
 
 class WriteSh:
-    def __init__(self, fasta=None, num_threads=10, fasta_dir=None, pssm_dir=None, dbdir=None, dbinp=None, dbout=None,
-                 possum=None, run_path="run_files"):
+    def __init__(self, fasta=None, fasta_dir="fasta_files", pssm_dir="pssm", num_threads=100, dbinp=None, dbout=None,
+                 dbdir="/gpfs/home/bsc72/bsc72661/feature_extraction/database", run_path="run_files",
+                 possum_dir="/gpfs/home/bsc72/bsc72661/feature_extraction/POSSUM_Toolkit/"):
         """
         Initialize the ExtractPssm class
 
@@ -77,31 +87,16 @@ class WriteSh:
             The name of the created databse database
         """
         self.fasta_file = fasta
-        if not fasta_dir:
-            self.fasta_dir = "/gpfs/projects/bsc72/ruite/feature_extraction/pssm_files/fasta_files"
-        else:
-            self.fasta_dir = fasta_dir
-        if not pssm_dir:
-            self.pssm = "/gpfs/projects/bsc72/ruite/feature_extraction/pssm_files/pssm"
-        else:
-            self.pssm = pssm_dir
-        if not dbinp:
-            self.dbinp = "/gpfs/home/bsc72/bsc72661/feature_extraction/uniref50.fasta"
-        else:
-            self.dbinp = dbinp
-        if not dbdir:
-            self.dbdir = "/gpfs/home/bsc72/bsc72661/feature_extraction/database"
-        else:
-            self.dbdir = dbdir
+        self.fasta_dir = fasta_dir
+        self.pssm = pssm_dir
+        self.dbinp = dbinp
+        self.dbdir = dbdir
         if not dbout:
             self.dbout = f"{self.dbdir}/uniref50"
         else:
             self.dbout = dbout
         self.num_thread = num_threads
-        if not possum:
-            self.possum = "/gpfs/home/bsc72/bsc72661/feature_extraction/POSSUM_Toolkit/"
-        else:
-            self.possum = possum
+        self.possum = possum_dir
         self.run_path = run_path
 
     def clean_fasta(self):
@@ -128,7 +123,7 @@ class WriteSh:
                      "echo 'Start at $(date)'\n", 'echo "-------------------------"\n', "python generate_pssm.py"]
 
             arguments = f"-f {self.fasta_dir} -p {self.pssm} -d {self.dbdir} -di {self.dbinp} -do {self.dbout} " \
-                        f"-n {self.num_thread} -i {self.fasta_file} -PO {self.possum} -num {num}"
+                        f"-n {self.num_thread} -i {self.fasta_file} -num {num}"
             python = f"python generate_pssm.py {arguments}\n"
             lines.append(python)
             lines.append('echo "End at $(date)"\n')
@@ -148,12 +143,11 @@ class WriteSh:
 
 
 def main():
-    fasta_file, pssm_dir, fasta_dir, ifeature, possum, ifeature_out, possum_out, filtered_out, dbdir, dbinp, dbout, \
-    num_thread, min_num, csv_name, positive, negative, restart, ifeature_feature, filter_only, file, long, \
+    fasta_file, pssm_dir, fasta_dir, ifeature_dir, possum_dir, ifeature_out, possum_out, filtered_out, dbdir, dbinp, dbout, \
+    num_thread, min_num, csv_name, positive, negative, restart, ifeature_feature, filter_only, extraction_restart, long, \
     run, start, end, run_path = arg_parse()
-    possum_dir = "/gpfs/home/bsc72/bsc72661/feature_extraction/POSSUM_Toolkit"
     if not restart:
-        sh = WriteSh(fasta_file, num_thread, fasta_dir, pssm_dir, dbdir, dbinp, dbout, possum_dir, run_path)
+        sh = WriteSh(fasta_file, fasta_dir, pssm_dir, num_thread, dbinp, dbout, dbdir, run_path, possum_dir)
         sh.clean_fasta()
         sh.write_all(start, end)
     elif restart == "pssm":
@@ -161,8 +155,8 @@ def main():
         for file in files:
             os.system(f"sbatch {file}")
     elif restart == "feature":
-        extract_and_filter(fasta_file, pssm_dir, fasta_dir, ifeature, ifeature_out, possum, possum_out, filtered_out,
-                           filter_only, file, long, num_thread, run)
+        extract_and_filter(fasta_file, pssm_dir, fasta_dir, ifeature_out, possum_dir, ifeature_dir, possum_out,
+                           filtered_out, filter_only, extraction_restart, long, num_thread, run)
         vote_and_filter(filtered_out, fasta_file, csv_name, min_num, positive, negative)
     elif restart == "predict":
         vote_and_filter(filtered_out, fasta_file, csv_name, min_num, positive, negative)

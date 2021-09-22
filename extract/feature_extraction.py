@@ -14,32 +14,34 @@ from multiprocessing import Pool
 def arg_parse():
     parser = argparse.ArgumentParser(description="extract features using possum and ifeatures")
     parser.add_argument("-i", "--fasta_file", help="The fasta file path", required=True)
-    parser.add_argument("-p", "--pssm_dir", help="The pssm files directory's path", required=False)
+    parser.add_argument("-p", "--pssm_dir", help="The pssm files directory's path", required=False,
+                        default="pssm")
     parser.add_argument("-f", "--fasta_dir", required=False, help="The directory for the fasta files",
-                        default="fasta_dir")
-    parser.add_argument("-IF", "--ifeature", required=False, help="Path to the iFeature programme")
-    parser.add_argument("-PO", "--possum", required=False, help="A path to the possum programme")
+                        default="fasta_files")
+    parser.add_argument("-id", "--ifeature_dir", required=False, help="Path to the iFeature programme folder",
+                        default="/gpfs/projects/bsc72/ruite/enzyminer/iFeature")
+    parser.add_argument("-Po", "--possum_dir", required=False, help="A path to the possum programme",
+                        default="/gpfs/home/bsc72/bsc72661/feature_extraction/POSSUM_Toolkit/")
     parser.add_argument("-if", "--ifeature_out", required=False, help="The directory where the ifeature features are",
-                        default="/gpfs/projects/bsc72/ruite/feature_extraction/power9/ifeature")
+                        default="ifeature_features")
     parser.add_argument("-po", "--possum_out", required=False, help="The directory for the possum extractions",
-                        default="/gpfs/projects/bsc72/ruite/feature_extraction/power9/possum")
+                        default="possum_features")
     parser.add_argument("-fo", "--filtered_out", required=False, help="The directory for the filtered features",
-                        default="/gpfs/projects/bsc72/ruite/feature_extraction/power9/filtered_features")
+                        default="filtered_features")
     parser.add_argument("-on", "--filter_only", required=False, help="true if you already have the features",
                         action="store_true")
-    parser.add_argument("-fl", "--file", required=False, help="The file to restart the extraction with")
+    parser.add_argument("-er", "--extraction_restart", required=False, help="The file to restart the extraction with")
     parser.add_argument("-lg", "--long", required=False, help="true you have to restart from the long commands",
                         action="store_true")
     parser.add_argument("-r", "--run", required=False, choices=("possum", "ifeature", "both"), default="both",
                         help="run possum or ifeature extraction")
     parser.add_argument("-n", "--num_thread", required=False, default=100, type=int,
                         help="The number of threads to use for the generation of pssm profiles")
-    parser.add_argument("-n", "--num_thread", required=False, default=100, type=int,
-                        help="The number of threads to use for the generation of pssm profiles")
     args = parser.parse_args()
 
-    return [args.fasta_file, args.pssm_dir, args.fasta_dir, args.ifeature, args.possum, args.ifeature_out,
-            args.possum_out, args.filtered_out, args.filter_only, args.file, args.long, args.run, args.num_thread]
+    return [args.fasta_file, args.pssm_dir, args.fasta_dir, args.ifeature_dir, args.possum_dir, args.ifeature_out,
+            args.possum_out, args.filtered_out, args.filter_only, args.extract_restart, args.long, args.run,
+            args.num_thread]
 
 
 class ExtractFeatures:
@@ -47,8 +49,9 @@ class ExtractFeatures:
     A class to extract features using Possum and iFeatures
     """
 
-    def __init__(self, fasta_file, pssm_dir=None, fasta_dir="fasta_dir", ifeature=None, ifeature_out="ifeature",
-                 possum=None, possum_out="possum", thread=12, run="both"):
+    def __init__(self, fasta_file, pssm_dir="pssm", fasta_dir="fasta_files", ifeature_out="ifeature_features",
+                 possum_out="possum_features", ifeature_dir="/gpfs/projects/bsc72/ruite/enzyminer/iFeature",
+                 thread=12, run="both", possum_dir="/gpfs/home/bsc72/bsc72661/feature_extraction/POSSUM_Toolkit"):
         """
         Initialize the ExtractFeatures class
 
@@ -74,19 +77,10 @@ class ExtractFeatures:
             self.base = dirname(self.fasta_file)
         else:
             self.base = "."
-        if not pssm_dir:
-            self.pssm_dir = "/gpfs/home/bsc72/bsc72661/feature_extraction/pssm_files/pssm"
-        else:
-            self.pssm_dir = pssm_dir
+        self.pssm_dir = pssm_dir
         self.fasta_dir = fasta_dir
-        if not ifeature:
-            self.ifeature = "/gpfs/home/bsc72/bsc72661/feature_extraction/iFeature/iFeature.py"
-        else:
-            self.ifeature = ifeature
-        if not possum:
-            self.possum = "/gpfs/home/bsc72/bsc72661/feature_extraction/POSSUM_Toolkit/possum_standalone.pl"
-        else:
-            self.possum = possum
+        self.ifeature = f"{ifeature_dir}/iFeature.py"
+        self.possum = f"{possum_dir}/possum_standalone.pl"
         self.ifeature_out = ifeature_out
         self.possum_out = possum_out
         self.thread = thread
@@ -356,9 +350,8 @@ class ReadFeatures:
     """
     A class to read the generated features
     """
-    def __init__(self, fasta_file, ifeature_out="/gpfs/projects/bsc72/ruite/feature_extraction/power9/ifeature",
-                 possum_out="/gpfs/projects/bsc72/ruite/feature_extraction/power9/possum",
-                 filtered_out="/gpfs/projects/bsc72/ruite/feature_extraction/power9/filtered_features"):
+    def __init__(self, fasta_file, ifeature_out="ifeature_features", possum_out="possum_features",
+                 filtered_out="filtered_features"):
         """
         Initialize the class ReadFeatures
 
@@ -489,11 +482,11 @@ class ReadFeatures:
         features_knn.to_csv(f"{self.filtered_out}/knn_features.csv", header=True)
 
 
-def extract_and_filter(fasta_file=None, pssm_dir=None, fasta_dir=None, ifeature=None, possum=None,
-                       ifeature_out="/gpfs/projects/bsc72/ruite/feature_extraction/power9/ifeature",
-                       possum_out="/gpfs/projects/bsc72/ruite/feature_extraction/power9/possum",
-                       filtered_out="/gpfs/projects/bsc72/ruite/feature_extraction/power9/filtered_features",
-                       filter_only=False, restart=None, long=False, thread=100, run="both"):
+def extract_and_filter(fasta_file=None, pssm_dir="pssm", fasta_dir="fasta_files", ifeature_out="ifeature_features",
+                       possum_dir="/gpfs/home/bsc72/bsc72661/feature_extraction/POSSUM_Toolkit",
+                       ifeature_dir="/gpfs/projects/bsc72/ruite/enzyminer/iFeature", possum_out="possum_features",
+                       filtered_out="filtered_features", filter_only=False, restart=None, long=False, thread=100,
+                       run="both"):
     """
     A function to extract and filter the features
 
@@ -522,8 +515,8 @@ def extract_and_filter(fasta_file=None, pssm_dir=None, fasta_dir=None, ifeature=
     """
     # Feature extraction
     if not filter_only:
-        extract = ExtractFeatures(fasta_file, pssm_dir, fasta_dir, ifeature, ifeature_out, possum, possum_out, thread,
-                                  run)
+        extract = ExtractFeatures(fasta_file, pssm_dir, fasta_dir, ifeature_out, possum_out, ifeature_dir, thread, run,
+                                  possum_dir)
         extract.run_extraction_parallel(restart, long)
 
     # feature filtering
@@ -532,10 +525,10 @@ def extract_and_filter(fasta_file=None, pssm_dir=None, fasta_dir=None, ifeature=
 
 
 def main():
-    fasta_file, pssm_dir, fasta_dir, ifeature, possum, ifeature_out, possum_out, filtered_out, filter_only, \
-    file, long, run, num_thread = arg_parse()
-    extract_and_filter(fasta_file, pssm_dir, fasta_dir, ifeature, possum, ifeature_out, possum_out, filtered_out,
-                       filter_only, file, long, num_thread, run)
+    fasta_file, pssm_dir, fasta_dir, ifeature_dir, possum_dir, ifeature_out, possum_out, filtered_out, filter_only, \
+    extraction_restart, long, run, num_thread = arg_parse()
+    extract_and_filter(fasta_file, pssm_dir, fasta_dir, ifeature_out, possum_dir, ifeature_dir, possum_out,
+                       filtered_out, filter_only, extraction_restart, long, num_thread, run)
 
 
 if __name__ == "__main__":

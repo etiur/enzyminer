@@ -4,7 +4,7 @@ import argparse
 import os
 import glob
 from os import path
-from os.path import basename
+from os.path import basename, dirname
 from Bio import SeqIO
 from Bio.SeqIO import FastaIO
 import time
@@ -14,28 +14,30 @@ from multiprocessing import Process, Pool
 
 def arg_parse():
     parser = argparse.ArgumentParser(description="creates a database and performs psiblast")
-    parser.add_argument("-f", "--fasta_dir", required=False, help="The directory for the fasta files")
-    parser.add_argument("-p", "--pssm_dir", required=False, help="The directory for the pssm files")
-    parser.add_argument("-d", "--dbdir", required=False, help="The directory for the database")
+    parser.add_argument("-f", "--fasta_dir", required=False, help="The directory for the fasta files",
+                        default="fasta_files")
+    parser.add_argument("-p", "--pssm_dir", required=False, help="The directory for the pssm files",
+                        default="pssm")
+    parser.add_argument("-d", "--dbdir", required=False, help="The directory for the database",
+                        default="/gpfs/home/bsc72/bsc72661/feature_extraction/database")
     parser.add_argument("-di", "--dbinp", required=False, help="The path to the fasta files to create the database")
     parser.add_argument("-do", "--dbout", required=False, help="The name for the created database")
     parser.add_argument("-n", "--num_thread", required=False, default=100, type=int,
                         help="The number of threads to use for the generation of pssm profiles")
     parser.add_argument("-i", "--fasta_file", required=False, help="The fasta file")
-    parser.add_argument("-PO", "--possum", required=False, help="A path to the possum programme")
     parser.add_argument("-num", "--number", required=False, help="a number for the files", default="*")
     args = parser.parse_args()
 
     return [args.fasta_file, args.fasta_dir, args.pssm_dir, args.dbdir, args.dbinp, args.dbout, args.num_thread,
-            args.possum, args.number]
+            args.number]
 
 
 class ExtractPssm:
     """
     A class to extract pssm profiles from protein sequecnes
     """
-    def __init__(self, fasta=None, num_threads=10, fasta_dir=None, pssm_dir=None, dbdir=None, dbinp=None, dbout=None,
-                 possum_dir=None):
+    def __init__(self, fasta=None, num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbinp=None, dbout=None,
+                 dbdir="/gpfs/home/bsc72/bsc72661/feature_extraction/database"):
         """
         Initialize the ExtractPssm class
 
@@ -58,30 +60,23 @@ class ExtractPssm:
         """
         self.fasta_file = fasta
         if not fasta_dir:
-            self.fasta_dir = "/gpfs/projects/bsc72/ruite/feature_extraction/pssm_files/fasta_files"
+            self.fasta_dir = dirname(self.fasta_file)
         else:
             self.fasta_dir = fasta_dir
-        if not pssm_dir:
-            self.pssm = "/gpfs/projects/bsc72/ruite/feature_extraction/pssm_files/pssm"
+        self.pssm = pssm_dir
+        self.fasta_file = fasta
+        if not fasta_dir:
+            self.fasta_dir = dirname(self.fasta_file)
         else:
-            self.pssm = pssm_dir
-        if not dbinp:
-            self.dbinp = "/gpfs/home/bsc72/bsc72661/feature_extraction/uniref50.fasta"
-        else:
-            self.dbinp = dbinp
-        if not dbdir:
-            self.dbdir = "/gpfs/home/bsc72/bsc72661/feature_extraction/database"
-        else:
-            self.dbdir = dbdir
+            self.fasta_dir = fasta_dir
+        self.pssm = pssm_dir
+        self.dbinp = dbinp
+        self.dbdir = dbdir
         if not dbout:
             self.dbout = f"{self.dbdir}/uniref50"
         else:
             self.dbout = dbout
         self.num_thread = num_threads
-        if not possum_dir:
-            self.possum = "/gpfs/home/bsc72/bsc72661/feature_extraction/POSSUM_Toolkit"
-        else:
-            self.possum = possum_dir
 
     def makedata(self):
         """
@@ -104,7 +99,7 @@ class ExtractPssm:
         file: iterator
             An iterator that stores the single-record fasta files
         """
-        base = basename(self.fasta_file)
+        base = dirname(self.fasta_file)
         with open(f"{base}/no_short.fasta") as inp:
             record = SeqIO.parse(inp, "fasta")
             count = 0
@@ -140,8 +135,6 @@ class ExtractPssm:
         """
         A function that generates the PSSM profiles
         """
-        if not path.exists(f"{self.pssm}"):
-            os.makedirs(f"{self.pssm}")
         name = basename(file).replace(".fsa", "")
         if not path.exists(f"{self.pssm}/{name}.pssm"):
             psi = psiblast(db=self.dbout, evalue=0.001,
@@ -160,6 +153,10 @@ class ExtractPssm:
         """
         run the generate function
         """
+        if not path.exists(f"{self.pssm}"):
+            os.makedirs(f"{self.pssm}")
+        if not os.path.exists(f"{self.fasta_dir}"):
+            os.makedirs(f"{self.fasta_dir}")
         if not os.path.exists(f"{self.fasta_dir}/seq_3.fsa"):
             self.separate_single()
         self.fast_check()
@@ -183,8 +180,8 @@ class ExtractPssm:
         logging.info(f"it took {end-start} to finish all the files")
 
 
-def generate_pssm(fasta=None, num_threads=10, fasta_dir=None, pssm_dir=None, dbdir=None, dbinp=None, dbout=None,
-                  possum=None, num="*"):
+def generate_pssm(fasta=None, num_threads=10, fasta_dir="fasta_files", pssm_dir="pssm", dbdir=None, dbinp=None,
+                  dbout=None, num="*"):
     """
     A function that creates protein databases, generates the pssms and returns the list of files
 
@@ -205,15 +202,15 @@ def generate_pssm(fasta=None, num_threads=10, fasta_dir=None, pssm_dir=None, dbd
     mpi: bool, optional
         If to use MPI or not
     """
-    pssm = ExtractPssm(fasta, num_threads, fasta_dir, pssm_dir, dbdir, dbinp, dbout, possum)
+    pssm = ExtractPssm(fasta, num_threads, fasta_dir, pssm_dir, dbinp, dbout, dbdir)
     if dbinp and dbout:
         pssm.makedata()
     pssm.run_generate(num)
 
 
 def main():
-    fasta_file, fasta_dir, pssm_dir, dbdir, dbinp, dbout, num_thread, possum, num = arg_parse()
-    generate_pssm(fasta_file, num_thread, fasta_dir, pssm_dir, dbdir, dbinp, dbout, possum, num)
+    fasta_file, fasta_dir, pssm_dir, dbdir, dbinp, dbout, num_thread, num = arg_parse()
+    generate_pssm(fasta_file, num_thread, fasta_dir, pssm_dir, dbdir, dbinp, dbout, num)
 
 
 if __name__ == "__main__":
