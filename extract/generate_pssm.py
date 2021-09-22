@@ -4,9 +4,7 @@ import argparse
 import os
 import glob
 from os import path
-from os.path import basename, dirname
-from Bio import SeqIO
-from Bio.SeqIO import FastaIO
+from os.path import basename
 import time
 import logging
 from multiprocessing import Process, Pool
@@ -82,26 +80,6 @@ class ExtractPssm:
 
         return stdout_db, stderr_db
 
-    def separate_single(self):
-        """
-        A function that separates the fasta files into individual files
-
-        Returns
-        _______
-        file: iterator
-            An iterator that stores the single-record fasta files
-        """
-        base = dirname(self.fasta_file)
-        with open(f"{base}/no_short.fasta") as inp:
-            record = SeqIO.parse(inp, "fasta")
-            count = 1
-            # write the record into new fasta files
-            for seq in record:
-                with open(f"{self.fasta_dir}/seq_{count}.fsa", "w") as split:
-                    fasta_out = FastaIO.FastaWriter(split, wrap=None)
-                    fasta_out.write_record(seq)
-                count += 1
-
     def _check_pssm(self, files):
         """
         Check if the pssm files are correct
@@ -147,10 +125,6 @@ class ExtractPssm:
         """
         if not path.exists(f"{self.pssm}"):
             os.makedirs(f"{self.pssm}")
-        if not os.path.exists(f"{self.fasta_dir}"):
-            os.makedirs(f"{self.fasta_dir}")
-        if not os.path.exists(f"{self.fasta_dir}/seq_3.fsa"):
-            self.separate_single()
         self.fast_check()
         file = glob.glob(f"{self.fasta_dir}/{num}*.fsa")
         file.sort(key=lambda x: int(basename(x).replace(".fsa", "").split("_")[1]))
@@ -161,8 +135,6 @@ class ExtractPssm:
         """
         A function that run the generate function in parallel
         """
-        if self.fasta_file:
-            self.separate_single()
         start = time.time()
         # Using the MPI to parallelize
         file = glob.glob(f"{self.fasta_dir}/*.fsa")

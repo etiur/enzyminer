@@ -7,6 +7,8 @@ from extract.feature_extraction import extract_and_filter
 from extract.generate_pssm import generate_pssm
 from subprocess import call
 import shlex
+from Bio import SeqIO
+from Bio.SeqIO import FastaIO
 
 
 def arg_parse():
@@ -114,6 +116,26 @@ class WriteSh:
         call(shlex.split(illegal), close_fds=False)
         call(shlex.split(short), close_fds=False)
 
+    def separate_single(self):
+        """
+        A function that separates the fasta files into individual files
+
+        Returns
+        _______
+        file: iterator
+            An iterator that stores the single-record fasta files
+        """
+        base = dirname(self.fasta_file)
+        with open(f"{base}/no_short.fasta") as inp:
+            record = SeqIO.parse(inp, "fasta")
+            count = 1
+            # write the record into new fasta files
+            for seq in record:
+                with open(f"{self.fasta_dir}/seq_{count}.fsa", "w") as split:
+                    fasta_out = FastaIO.FastaWriter(split, wrap=None)
+                    fasta_out.write_record(seq)
+                count += 1
+
     def write(self, num):
         if type(num) == str:
             nums = "all"
@@ -137,6 +159,19 @@ class WriteSh:
         return f"{self.run_path}/pssm_{nums}.sh"
 
     def write_all(self, start=1, end=None):
+        """
+        Parameters
+        ----------
+        start: int, optional
+            The starting number, leave it to 1
+        end: int, optional
+            The ending number, not included
+        """
+        if not os.path.exists(f"{self.fasta_dir}"):
+            os.makedirs(f"{self.fasta_dir}")
+        if not os.path.exists(f"{self.fasta_dir}/seq_3.fsa"):
+            self.separate_single()
+
         if start and end:
             for num in range(start, end):
                 pssm = self.write(num)
