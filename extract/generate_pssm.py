@@ -7,7 +7,8 @@ from os import path
 from os.path import basename
 import time
 import logging
-from multiprocessing import Process, Pool
+from multiprocessing import Process
+from multiprocessing.dummy import Pool
 
 
 def arg_parse():
@@ -92,14 +93,8 @@ class ExtractPssm:
         """
         Accelerates the checking of files
         """
-        pros = []
         file = glob.glob(f"{self.pssm}/*.pssm")
-        for prep_pdb in file:
-            p = Process(target=self._check_pssm, args=(prep_pdb,))
-            p.start()
-            pros.append(p)
-        for p in pros:
-            p.join()
+        Pool(self.num_thread).map(self._check_pssm, file)
 
     def generate(self, file=None):
         """
