@@ -7,7 +7,6 @@ from os import path
 from os.path import basename
 import time
 import logging
-from multiprocessing import Process
 from multiprocessing.dummy import Pool
 
 
