@@ -24,10 +24,12 @@ def arg_parse():
                         help="The number of threads to use for the generation of pssm profiles")
     parser.add_argument("-i", "--fasta_file", required=False, help="The fasta file")
     parser.add_argument("-num", "--number", required=False, help="a number for the files", default="*")
+    parser.add_argument("-pa", "--parallel", required=False, help="if run parallel to generate the pssm files",
+                        action="store_true")
     args = parser.parse_args()
 
     return [args.fasta_file, args.fasta_dir, args.pssm_dir, args.dbdir, args.dbinp, args.dbout, args.num_thread,
-            args.number]
+            args.number, args.parallel]
 
 
 class ExtractPssm:
@@ -125,13 +127,14 @@ class ExtractPssm:
         for files in file:
             self.generate(files)
 
-    def parallel(self):
+    def parallel(self, num):
         """
         A function that run the generate function in parallel
         """
         start = time.time()
         # Using the MPI to parallelize
-        file = glob.glob(f"{self.fasta_dir}/*.fsa")
+        file = glob.glob(f"{self.fasta_dir}/{num}*.fsa")
+        file.sort(key=lambda x: int(basename(x).replace(".fsa", "").split("_")[1]))
         with Pool(processes=self.num_thread*5) as executor:
             executor.map(self.generate, file)
         end = time.time()
@@ -139,7 +142,7 @@ class ExtractPssm:
 
 
 def generate_pssm(fasta=None, num_threads=10, fasta_dir="fasta_files", pssm_dir="pssm", dbdir=None, dbinp=None,
-                  dbout=None, num="*"):
+                  dbout=None, num="*", parallel=False):
     """
     A function that creates protein databases, generates the pssms and returns the list of files
 
@@ -159,16 +162,21 @@ def generate_pssm(fasta=None, num_threads=10, fasta_dir="fasta_files", pssm_dir=
         The name of the created databse database
     mpi: bool, optional
         If to use MPI or not
+    parallel: bool, optional
+        True if use parallel to run the generate_pssm
     """
     pssm = ExtractPssm(fasta, num_threads, fasta_dir, pssm_dir, dbinp, dbout, dbdir)
     if dbinp and dbout:
         pssm.makedata()
-    pssm.run_generate(num)
+    if not parallel:
+        pssm.run_generate(num)
+    else:
+        pssm.parallel(num)
 
 
 def main():
-    fasta_file, fasta_dir, pssm_dir, dbdir, dbinp, dbout, num_thread, num = arg_parse()
-    generate_pssm(fasta_file, num_thread, fasta_dir, pssm_dir, dbdir, dbinp, dbout, num)
+    fasta_file, fasta_dir, pssm_dir, dbdir, dbinp, dbout, num_thread, num, parallel = arg_parse()
+    generate_pssm(fasta_file, num_thread, fasta_dir, pssm_dir, dbdir, dbinp, dbout, num, parallel)
 
 
 if __name__ == "__main__":
