@@ -135,13 +135,13 @@ class ExtractPssm:
         # Using the MPI to parallelize
         file = glob.glob(f"{self.fasta_dir}/{num}*.fsa")
         file.sort(key=lambda x: int(basename(x).replace(".fsa", "").split("_")[1]))
-        with Pool(processes=self.num_thread*5) as executor:
+        with Pool(processes=self.num_thread) as executor:
             executor.map(self.generate, file)
         end = time.time()
         logging.info(f"it took {end-start} to finish all the files")
 
 
-def generate_pssm(fasta=None, num_threads=10, fasta_dir="fasta_files", pssm_dir="pssm", dbdir=None, dbinp=None,
+def generate_pssm(fasta=None, num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbdir=None, dbinp=None,
                   dbout=None, num="*", parallel=True):
     """
     A function that creates protein databases, generates the pssms and returns the list of files
