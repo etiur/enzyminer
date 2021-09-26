@@ -22,13 +22,12 @@ def arg_parse():
     parser.add_argument("-do", "--dbout", required=False, help="The name for the created database")
     parser.add_argument("-n", "--num_thread", required=False, default=100, type=int,
                         help="The number of threads to use for the generation of pssm profiles")
-    parser.add_argument("-i", "--fasta_file", required=False, help="The fasta file")
     parser.add_argument("-num", "--number", required=False, help="a number for the files", default="*")
     parser.add_argument("-pa", "--parallel", required=False, help="if run parallel to generate the pssm files",
                         action="store_false")
     args = parser.parse_args()
 
-    return [args.fasta_file, args.fasta_dir, args.pssm_dir, args.dbdir, args.dbinp, args.dbout, args.num_thread,
+    return [args.fasta_dir, args.pssm_dir, args.dbdir, args.dbinp, args.dbout, args.num_thread,
             args.number, args.parallel]
 
 
@@ -36,7 +35,7 @@ class ExtractPssm:
     """
     A class to extract pssm profiles from protein sequecnes
     """
-    def __init__(self, fasta=None, num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbinp=None, dbout=None,
+    def __init__(self, num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbinp=None, dbout=None,
                  dbdir="/gpfs/home/bsc72/bsc72661/feature_extraction/database"):
         """
         Initialize the ExtractPssm class
@@ -59,7 +58,6 @@ class ExtractPssm:
             The name of the created databse database
         """
         self.pssm = pssm_dir
-        self.fasta_file = fasta
         self.fasta_dir = fasta_dir
         self.pssm = pssm_dir
         self.dbinp = dbinp
@@ -141,7 +139,7 @@ class ExtractPssm:
         logging.info(f"it took {end-start} to finish all the files")
 
 
-def generate_pssm(fasta=None, num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbdir=None, dbinp=None,
+def generate_pssm(num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbdir=None, dbinp=None,
                   dbout=None, num="*", parallel=True):
     """
     A function that creates protein databases, generates the pssms and returns the list of files
@@ -165,7 +163,7 @@ def generate_pssm(fasta=None, num_threads=100, fasta_dir="fasta_files", pssm_dir
     parallel: bool, optional
         True if use parallel to run the generate_pssm
     """
-    pssm = ExtractPssm(fasta, num_threads, fasta_dir, pssm_dir, dbinp, dbout, dbdir)
+    pssm = ExtractPssm(num_threads, fasta_dir, pssm_dir, dbinp, dbout, dbdir)
     if dbinp and dbout:
         pssm.makedata()
     if not parallel:
@@ -175,8 +173,8 @@ def generate_pssm(fasta=None, num_threads=100, fasta_dir="fasta_files", pssm_dir
 
 
 def main():
-    fasta_file, fasta_dir, pssm_dir, dbdir, dbinp, dbout, num_thread, num, parallel = arg_parse()
-    generate_pssm(fasta_file, num_thread, fasta_dir, pssm_dir, dbdir, dbinp, dbout, num, parallel)
+    fasta_dir, pssm_dir, dbdir, dbinp, dbout, num_thread, num, parallel = arg_parse()
+    generate_pssm(num_thread, fasta_dir, pssm_dir, dbdir, dbinp, dbout, num, parallel)
 
 
 if __name__ == "__main__":
