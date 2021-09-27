@@ -93,7 +93,8 @@ class ExtractPssm:
         Accelerates the checking of files
         """
         file = glob.glob(f"{self.pssm}/*.pssm")
-        Pool(self.num_thread).map(self._check_pssm, file)
+        with Pool(processes=self.num_thread) as executor:
+            executor.map(self._check_pssm, file)
 
     def generate(self, file=None):
         """
