@@ -108,7 +108,7 @@ class ExtractPssm:
                            save_pssm_after_last_round=True,
                            query=f"{file}",
                            num_threads=self.num_thread)
-            start = time.time() #
+            start = time.time()
             stdout_psi, stderr_psi = psi()
             end = time.time()
             print(f"it took {end - start} to finish {name}.pssm")
