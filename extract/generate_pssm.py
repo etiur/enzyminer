@@ -4,7 +4,7 @@ import argparse
 import os
 import glob
 from os import path
-from os.path import basename
+from os.path import basename, dirname
 import time
 import logging
 from multiprocessing.dummy import Pool
@@ -16,10 +16,9 @@ def arg_parse():
                         default="fasta_files")
     parser.add_argument("-p", "--pssm_dir", required=False, help="The directory for the pssm files",
                         default="pssm")
-    parser.add_argument("-d", "--dbdir", required=False, help="The directory for the database",
-                        default="/gpfs/home/bsc72/bsc72661/feature_extraction/database")
     parser.add_argument("-di", "--dbinp", required=False, help="The path to the fasta files to create the database")
-    parser.add_argument("-do", "--dbout", required=False, help="The name for the created database")
+    parser.add_argument("-do", "--dbout", required=False, help="The name for the created database",
+                        default="/gpfs/home/bsc72/bsc72661/feature_extraction/database/uniref50")
     parser.add_argument("-n", "--num_thread", required=False, default=100, type=int,
                         help="The number of threads to use for the generation of pssm profiles")
     parser.add_argument("-num", "--number", required=False, help="a number for the files", default="*")
@@ -27,16 +26,15 @@ def arg_parse():
                         action="store_false")
     args = parser.parse_args()
 
-    return [args.fasta_dir, args.pssm_dir, args.dbdir, args.dbinp, args.dbout, args.num_thread,
-            args.number, args.parallel]
+    return [args.fasta_dir, args.pssm_dir, args.dbinp, args.dbout, args.num_thread, args.number, args.parallel]
 
 
 class ExtractPssm:
     """
     A class to extract pssm profiles from protein sequecnes
     """
-    def __init__(self, num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbinp=None, dbout=None,
-                 dbdir="/gpfs/home/bsc72/bsc72661/feature_extraction/database"):
+    def __init__(self, num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbinp=None,
+                 dbout="/gpfs/home/bsc72/bsc72661/feature_extraction/database/uniref50"):
         """
         Initialize the ExtractPssm class
 
@@ -50,8 +48,6 @@ class ExtractPssm:
             The directory of the fasta files
         pssm_dir: str, optional
             The directory for the output pssm files
-        dbdir: str, optional
-            The directory for the protein database
         dbinp: str, optional
             The path to the protein database
         dbout: str, optional
@@ -61,21 +57,17 @@ class ExtractPssm:
         self.fasta_dir = fasta_dir
         self.pssm = pssm_dir
         self.dbinp = dbinp
-        self.dbdir = dbdir
-        if not dbout:
-            self.dbout = f"{self.dbdir}/uniref50"
-        else:
-            self.dbout = dbout
+        self.dbout = dbout
         self.num_thread = num_threads
 
     def makedata(self):
         """
         A function that creates a database for the PSI_blast
         """
-        if not path.exists(self.dbdir):
-            os.makedirs(self.dbdir)
+        if not path.exists(dirname(self.dbout)):
+            os.makedirs(dirname(self.dbout))
         # running the blast commands
-        blast_db = makedb(dbtype="prot", input_file=f"{self.dbinp}", out=f"{self.dbout}")
+        blast_db = makedb(dbtype="prot", input_file=f"{self.dbinp}", out=f"{basename(self.dbout)}")
         stdout_db, stderr_db = blast_db()
 
         return stdout_db, stderr_db
@@ -140,8 +132,8 @@ class ExtractPssm:
         logging.info(f"it took {end-start} to finish all the files")
 
 
-def generate_pssm(num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbdir=None, dbinp=None,
-                  dbout=None, num="*", parallel=True):
+def generate_pssm(num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbinp=None,
+                  dbout="/gpfs/home/bsc72/bsc72661/feature_extraction/database/uniref50", num="*", parallel=True):
     """
     A function that creates protein databases, generates the pssms and returns the list of files
 
@@ -153,8 +145,6 @@ def generate_pssm(num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbd
         The directory of the fasta files
     pssm_dir: str, optional
         The directory for the output pssm files
-    dbdir: str, optional
-        The directory for the protein database
     dbinp: str, optional
         The path to the protein database
     dbout: str, optional
@@ -164,7 +154,7 @@ def generate_pssm(num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbd
     parallel: bool, optional
         True if use parallel to run the generate_pssm
     """
-    pssm = ExtractPssm(num_threads, fasta_dir, pssm_dir, dbinp, dbout, dbdir)
+    pssm = ExtractPssm(num_threads, fasta_dir, pssm_dir, dbinp, dbout)
     if dbinp and dbout:
         pssm.makedata()
     if not parallel:
@@ -174,8 +164,8 @@ def generate_pssm(num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbd
 
 
 def main():
-    fasta_dir, pssm_dir, dbdir, dbinp, dbout, num_thread, num, parallel = arg_parse()
-    generate_pssm(num_thread, fasta_dir, pssm_dir, dbdir, dbinp, dbout, num, parallel)
+    fasta_dir, pssm_dir, dbinp, dbout, num_thread, num, parallel = arg_parse()
+    generate_pssm(num_thread, fasta_dir, pssm_dir, dbinp, dbout, num, parallel)
 
 
 if __name__ == "__main__":

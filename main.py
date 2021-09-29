@@ -29,11 +29,10 @@ def arg_parse():
     parser.add_argument("-fo", "--filtered_out", required=False, help="The directory for the filtered features",
                         default="filtered_features")
     parser.add_argument("-di", "--dbinp", required=False, help="The path to the fasta files to create the database")
-    parser.add_argument("-do", "--dbout", required=False, help="The name for the created database")
+    parser.add_argument("-do", "--dbout", required=False, help="The path and name of the created database",
+                        default="/gpfs/home/bsc72/bsc72661/feature_extraction/database/uniref50")
     parser.add_argument("-n", "--num_thread", required=False, default=100, type=int,
                         help="The number of threads to use for the generation of pssm profiles")
-    parser.add_argument("-d", "--dbdir", required=False, help="The directory for the database",
-                        default="/gpfs/home/bsc72/bsc72661/feature_extraction/database")
     parser.add_argument("-ps", "--positive_sequences", required=False,
                         default="results/positive.fasta",
                         help="The name for the fasta file with the positive sequences")
@@ -63,15 +62,15 @@ def arg_parse():
     args = parser.parse_args()
 
     return [args.fasta_file, args.pssm_dir, args.fasta_dir, args.ifeature_dir, args.possum_dir, args.ifeature_out,
-            args.possum_out, args.filtered_out, args.dbdir, args.dbinp, args.dbout, args.num_thread,
+            args.possum_out, args.filtered_out, args.dbinp, args.dbout, args.num_thread,
             args.number_similar_samples, args.csv_name, args.positive_sequences, args.negative_sequences, args.restart,
             args.filter_only, args.extraction_restart, args.long, args.run, args.start, args.end, args.sbatch_path,
             args.parallel]
 
 
 class WriteSh:
-    def __init__(self, fasta=None, fasta_dir="fasta_files", pssm_dir="pssm", num_threads=100, dbinp=None, dbout=None,
-                 dbdir="/gpfs/home/bsc72/bsc72661/feature_extraction/database", run_path="run_files",
+    def __init__(self, fasta=None, fasta_dir="fasta_files", pssm_dir="pssm", num_threads=100, dbinp=None,
+                 dbout="/gpfs/home/bsc72/bsc72661/feature_extraction/database/uniref50", run_path="run_files",
                  possum_dir="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/", parallel=True):
         """
         Initialize the ExtractPssm class
@@ -86,8 +85,6 @@ class WriteSh:
             The directory of the fasta files
         pssm_dir: str, optional
             The directory for the output pssm files
-        dbdir: str, optional
-            The directory for the protein database
         dbinp: str, optional
             The path to the protein database
         dbout: str, optional
@@ -97,11 +94,7 @@ class WriteSh:
         self.fasta_dir = fasta_dir
         self.pssm = pssm_dir
         self.dbinp = dbinp
-        self.dbdir = dbdir
-        if not dbout:
-            self.dbout = f"{self.dbdir}/uniref50"
-        else:
-            self.dbout = dbout
+        self.dbout = dbout
         self.num_thread = num_threads
         self.possum = possum_dir
         self.run_path = run_path
@@ -155,13 +148,17 @@ class WriteSh:
                      f"#SBATCH --error=pssm_{nums}.err\n", f"#SBATCH --ntasks={self.num_thread}\n\n",
                      "module purge && module load gcc/7.2.0 blast/2.11.0 impi/2018.1 mkl/2018.1 python/3.7.4\n",
                      "echo 'Start at $(date)'\n", 'echo "-------------------------"\n']
-            if self.parallel:
-                arguments = f"-f {self.fasta_dir} -p {self.pssm} -d {self.dbdir} -di {self.dbinp} -do {self.dbout} " \
-                            f"-n {self.num_thread} -num {num}"
-            else:
-                arguments = f"-f {self.fasta_dir} -p {self.pssm} -d {self.dbdir} -di {self.dbinp} -do {self.dbout} " \
-                            f"-n {self.num_thread} -num {num} -pa"
-            python = f"python /gpfs/projects/bsc72/ruite/enzyminer/extract/generate_pssm.py {arguments}\n"
+            argument_list = []
+            arguments = f"-f {self.fasta_dir} -p {self.pssm} -n {self.num_thread} -num {num} "
+            argument_list.append(arguments)
+            if not self.parallel:
+                argument_list.append("-pa ")
+            if self.dbout != "/gpfs/home/bsc72/bsc72661/feature_extraction/database/uniref50":
+                argument_list.append(f"-do {self.dbout} ")
+            if self.dbinp:
+                argument_list.append(f"-di {self.dbinp} ")
+            all_arguments = "".join(argument_list)
+            python = f"python /gpfs/projects/bsc72/ruite/enzyminer/extract/generate_pssm.py {all_arguments}\n"
             lines.append(python)
             lines.append('echo "End at $(date)"\n')
             sh.writelines(lines)
@@ -193,11 +190,11 @@ class WriteSh:
 
 
 def main():
-    fasta_file, pssm_dir, fasta_dir, ifeature_dir, possum_dir, ifeature_out, possum_out, filtered_out, dbdir, dbinp, \
+    fasta_file, pssm_dir, fasta_dir, ifeature_dir, possum_dir, ifeature_out, possum_out, filtered_out, dbinp, \
     dbout, num_thread, min_num, csv_name, positive, negative, restart, filter_only, extraction_restart, long, \
     run, start, end, sbatch_path, parallel = arg_parse()
     if not restart:
-        sh = WriteSh(fasta_file, fasta_dir, pssm_dir, num_thread, dbinp, dbout, dbdir, sbatch_path, possum_dir, parallel)
+        sh = WriteSh(fasta_file, fasta_dir, pssm_dir, num_thread, dbinp, dbout, sbatch_path, possum_dir, parallel)
         sh.clean_fasta()
         sh.write_all(start, end)
     elif restart == "pssm":
