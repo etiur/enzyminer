@@ -158,7 +158,7 @@ class WriteSh:
 
             arguments = f"-f {self.fasta_dir} -p {self.pssm} -d {self.dbdir} -di {self.dbinp} -do {self.dbout} " \
                         f"-n {self.num_thread} -num {num} -pa {self.parallel}"
-            python = f"python generate_pssm.py {arguments}\n"
+            python = f"python /gpfs/projects/bsc72/ruite/enzyminer/extract/generate_pssm.py {arguments}\n"
             lines.append(python)
             lines.append('echo "End at $(date)"\n')
             sh.writelines(lines)
