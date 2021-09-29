@@ -13,7 +13,7 @@ from Bio.SeqIO import FastaIO
 
 def arg_parse():
     parser = argparse.ArgumentParser(description="extract features using possum and ifeatures")
-    parser.add_argument("-i", "--fasta_file", help="The fasta file path")
+    parser.add_argument("-i", "--fasta_file", help="The fasta file path", required=False)
     parser.add_argument("-p", "--pssm_dir", help="The pssm files directory's path", required=False,
                         default="pssm")
     parser.add_argument("-f", "--fasta_dir", required=False, help="The directory for the fasta files",
