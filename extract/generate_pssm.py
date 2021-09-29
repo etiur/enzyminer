@@ -67,7 +67,7 @@ class ExtractPssm:
         if not path.exists(dirname(self.dbout)):
             os.makedirs(dirname(self.dbout))
         # running the blast commands
-        blast_db = makedb(dbtype="prot", input_file=f"{self.dbinp}", out=f"{self.dbout}")
+        blast_db = makedb(dbtype="prot", input_file=f"{self.dbinp}", out=f"{self.dbout}", title=f"{basename(self.dbout)}")
         stdout_db, stderr_db = blast_db()
 
         return stdout_db, stderr_db
