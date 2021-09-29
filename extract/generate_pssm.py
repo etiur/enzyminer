@@ -18,7 +18,7 @@ def arg_parse():
                         default="pssm")
     parser.add_argument("-di", "--dbinp", required=False, help="The path to the fasta files to create the database")
     parser.add_argument("-do", "--dbout", required=False, help="The name for the created database",
-                        default="/gpfs/home/bsc72/bsc72661/feature_extraction/database/uniref50")
+                        default="/gpfs/projects/bsc72/ruite/enzyminer/database/uniref50")
     parser.add_argument("-n", "--num_thread", required=False, default=100, type=int,
                         help="The number of threads to use for the generation of pssm profiles")
     parser.add_argument("-num", "--number", required=False, help="a number for the files", default="*")
@@ -34,7 +34,7 @@ class ExtractPssm:
     A class to extract pssm profiles from protein sequecnes
     """
     def __init__(self, num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbinp=None,
-                 dbout="/gpfs/home/bsc72/bsc72661/feature_extraction/database/uniref50"):
+                 dbout="/gpfs/projects/bsc72/ruite/enzyminer/database/uniref50"):
         """
         Initialize the ExtractPssm class
 
@@ -67,7 +67,7 @@ class ExtractPssm:
         if not path.exists(dirname(self.dbout)):
             os.makedirs(dirname(self.dbout))
         # running the blast commands
-        blast_db = makedb(dbtype="prot", input_file=f"{self.dbinp}", out=f"{basename(self.dbout)}")
+        blast_db = makedb(dbtype="prot", input_file=f"{self.dbinp}", out=f"{self.dbout}")
         stdout_db, stderr_db = blast_db()
 
         return stdout_db, stderr_db
@@ -94,12 +94,14 @@ class ExtractPssm:
         """
         name = basename(file).replace(".fsa", "")
         if not path.exists(f"{abspath(self.pssm)}/{name}.pssm"):
+            print(self.dbout)
+            print(file)
             psi = psiblast(db=self.dbout, evalue=0.001,
                            num_iterations=3,
                            out_ascii_pssm=f"{abspath(self.pssm)}/{name}.pssm",
                            save_pssm_after_last_round=True,
-                           query=f"{file}",
-                           num_threads=int(self.num_thread))
+                           query=file,
+                           num_threads=self.num_thread)
             start = time.time()
             stdout_psi, stderr_psi = psi()
             end = time.time()
@@ -128,8 +130,6 @@ class ExtractPssm:
         start = time.time()
         # Using the MPI to parallelize
         file = glob.glob(f"{abspath(self.fasta_dir)}/seq_{num}*.fsa")
-        print(abspath(self.fasta_dir))
-        print(file)
         file.sort(key=lambda x: int(basename(x).replace(".fsa", "").split("_")[1]))
         with Pool(processes=self.num_thread) as executor:
             executor.map(self.generate, file)
@@ -138,7 +138,7 @@ class ExtractPssm:
 
 
 def generate_pssm(num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbinp=None,
-                  dbout="/gpfs/home/bsc72/bsc72661/feature_extraction/database/uniref50", num="*", parallel=True):
+                  dbout="/gpfs/projects/bsc72/ruite/enzyminer/database/uniref50", num="*", parallel=True):
     """
     A function that creates protein databases, generates the pssms and returns the list of files
 

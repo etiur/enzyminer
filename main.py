@@ -30,7 +30,7 @@ def arg_parse():
                         default="filtered_features")
     parser.add_argument("-di", "--dbinp", required=False, help="The path to the fasta files to create the database")
     parser.add_argument("-do", "--dbout", required=False, help="The path and name of the created database",
-                        default="/gpfs/home/bsc72/bsc72661/feature_extraction/database/uniref50")
+                        default="/gpfs/projects/bsc72/ruite/enzyminer/database/uniref50")
     parser.add_argument("-n", "--num_thread", required=False, default=100, type=int,
                         help="The number of threads to use for the generation of pssm profiles")
     parser.add_argument("-ps", "--positive_sequences", required=False,
@@ -70,7 +70,7 @@ def arg_parse():
 
 class WriteSh:
     def __init__(self, fasta=None, fasta_dir="fasta_files", pssm_dir="pssm", num_threads=100, dbinp=None,
-                 dbout="/gpfs/home/bsc72/bsc72661/feature_extraction/database/uniref50", run_path="run_files",
+                 dbout="/gpfs/projects/bsc72/ruite/enzyminer/database/uniref50", run_path="run_files",
                  possum_dir="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/", parallel=True):
         """
         Initialize the ExtractPssm class
@@ -153,7 +153,7 @@ class WriteSh:
             argument_list.append(arguments)
             if not self.parallel:
                 argument_list.append("-pa ")
-            if self.dbout != "/gpfs/home/bsc72/bsc72661/feature_extraction/database/uniref50":
+            if self.dbout != "/gpfs/projects/bsc72/ruite/enzyminer/database/uniref50":
                 argument_list.append(f"-do {self.dbout} ")
             if self.dbinp:
                 argument_list.append(f"-di {self.dbinp} ")
