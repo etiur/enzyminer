@@ -4,7 +4,7 @@ import argparse
 import os
 import glob
 from os import path
-from os.path import basename, dirname
+from os.path import basename, dirname, abspath
 import time
 import logging
 from multiprocessing.dummy import Pool
@@ -84,7 +84,7 @@ class ExtractPssm:
         """
         Accelerates the checking of files
         """
-        file = glob.glob(f"{self.pssm}/*.pssm")
+        file = glob.glob(f"{abspath(self.pssm)}/*.pssm")
         with Pool(processes=self.num_thread) as executor:
             executor.map(self._check_pssm, file)
 
@@ -93,13 +93,13 @@ class ExtractPssm:
         A function that generates the PSSM profiles
         """
         name = basename(file).replace(".fsa", "")
-        if not path.exists(f"{self.pssm}/{name}.pssm"):
+        if not path.exists(f"{abspath(self.pssm)}/{name}.pssm"):
             psi = psiblast(db=self.dbout, evalue=0.001,
                            num_iterations=3,
-                           out_ascii_pssm=f"{self.pssm}/{name}.pssm",
+                           out_ascii_pssm=f"{abspath(self.pssm)}/{name}.pssm",
                            save_pssm_after_last_round=True,
                            query=f"{file}",
-                           num_threads=self.num_thread)
+                           num_threads=int(self.num_thread))
             start = time.time()
             stdout_psi, stderr_psi = psi()
             end = time.time()
@@ -110,10 +110,10 @@ class ExtractPssm:
         """
         run the generate function
         """
-        if not path.exists(f"{self.pssm}"):
-            os.makedirs(f"{self.pssm}")
+        if not path.exists(f"{abspath(self.pssm)}"):
+            os.makedirs(f"{abspath(self.pssm)}")
         self.fast_check()
-        file = glob.glob(f"{self.fasta_dir}/{num}*.fsa")
+        file = glob.glob(f"{abspath(self.fasta_dir)}/seq_{num}*.fsa")
         file.sort(key=lambda x: int(basename(x).replace(".fsa", "").split("_")[1]))
         for files in file:
             self.generate(files)
@@ -122,9 +122,14 @@ class ExtractPssm:
         """
         A function that run the generate function in parallel
         """
+        if not path.exists(f"{abspath(self.pssm)}"):
+            os.makedirs(f"{abspath(self.pssm)}")
+        self.fast_check()
         start = time.time()
         # Using the MPI to parallelize
-        file = glob.glob(f"{self.fasta_dir}/{num}*.fsa")
+        file = glob.glob(f"{abspath(self.fasta_dir)}/seq_{num}*.fsa")
+        print(abspath(self.fasta_dir))
+        print(file)
         file.sort(key=lambda x: int(basename(x).replace(".fsa", "").split("_")[1]))
         with Pool(processes=self.num_thread) as executor:
             executor.map(self.generate, file)
