@@ -23,7 +23,7 @@ def arg_parse():
                         help="The number of threads to use for the generation of pssm profiles")
     parser.add_argument("-num", "--number", required=False, help="a number for the files", default="*")
     parser.add_argument("-pa", "--parallel", required=False, help="if run parallel to generate the pssm files",
-                        action="store_false")
+                        action="store_true")
     args = parser.parse_args()
 
     return [args.fasta_dir, args.pssm_dir, args.dbinp, args.dbout, args.num_thread, args.number, args.parallel]
@@ -138,7 +138,7 @@ class ExtractPssm:
 
 
 def generate_pssm(num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbinp=None,
-                  dbout="/gpfs/projects/bsc72/ruite/enzyminer/database/uniref50", num="*", parallel=True):
+                  dbout="/gpfs/projects/bsc72/ruite/enzyminer/database/uniref50", num="*", parallel=False):
     """
     A function that creates protein databases, generates the pssms and returns the list of files
 

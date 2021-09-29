@@ -58,7 +58,7 @@ def arg_parse():
     parser.add_argument("-sp", "--sbatch_path", required=False, help="The folder to keep the run files for generating pssm",
                         default="run_files")
     parser.add_argument("-pa", "--parallel", required=False, help="if run parallel to generate the pssm files",
-                        action="store_false")
+                        action="store_true")
     args = parser.parse_args()
 
     return [args.fasta_file, args.pssm_dir, args.fasta_dir, args.ifeature_dir, args.possum_dir, args.ifeature_out,
@@ -71,7 +71,7 @@ def arg_parse():
 class WriteSh:
     def __init__(self, fasta=None, fasta_dir="fasta_files", pssm_dir="pssm", num_threads=100, dbinp=None,
                  dbout="/gpfs/projects/bsc72/ruite/enzyminer/database/uniref50", run_path="run_files",
-                 possum_dir="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/", parallel=True):
+                 possum_dir="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/", parallel=False):
         """
         Initialize the ExtractPssm class
 
@@ -151,7 +151,7 @@ class WriteSh:
             argument_list = []
             arguments = f"-f {self.fasta_dir} -p {self.pssm} -n {self.num_thread} -num {num} "
             argument_list.append(arguments)
-            if not self.parallel:
+            if self.parallel:
                 argument_list.append("-pa ")
             if self.dbout != "/gpfs/projects/bsc72/ruite/enzyminer/database/uniref50":
                 argument_list.append(f"-do {self.dbout} ")
