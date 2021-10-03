@@ -94,8 +94,6 @@ class ExtractPssm:
         """
         name = basename(file).replace(".fsa", "")
         if not path.exists(f"{abspath(self.pssm)}/{name}.pssm"):
-            print(self.dbout)
-            print(file)
             psi = psiblast(db=self.dbout, evalue=0.001,
                            num_iterations=3,
                            out_ascii_pssm=f"{abspath(self.pssm)}/{name}.pssm",

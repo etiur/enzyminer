@@ -147,7 +147,7 @@ class WriteSh:
             lines = ["#!/bin/bash\n", f"#SBATCH -J pssm_{nums}\n", f"#SBATCH --output=pssm_{nums}.out\n",
                      f"#SBATCH --error=pssm_{nums}.err\n", f"#SBATCH --ntasks={self.num_thread}\n\n",
                      "module purge && module load gcc/7.2.0 blast/2.11.0 impi/2018.1 mkl/2018.1 python/3.7.4\n",
-                     "echo 'Start at $(date)'\n", 'echo "-------------------------"\n']
+                     'echo "Start at $(date)"\n', 'echo "-------------------------"\n']
             argument_list = []
             arguments = f"-f {self.fasta_dir} -p {self.pssm} -n {self.num_thread} -num {num} "
             argument_list.append(arguments)
