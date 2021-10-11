@@ -90,7 +90,7 @@ class EnsembleVoting:
         ridge_40 = joblib.load(f"{self.models}/ridge_20.pkl")
         ridge_80 = joblib.load(f"{self.models}/ridge_80.pkl")
         knn_20 = joblib.load(f"{self.models}/knn_20.pkl")
-        knn_70 = joblib.load(f"{self.models}/knn_70.pkl")
+        knn_80 = joblib.load(f"{self.models}/knn_80.pkl")
 
         # predict ch2_20 features
         transformed_x, old_svc = self.scale_transform(f"{self.filtered_out}/svc_features.csv", "ch2_20")
@@ -111,7 +111,7 @@ class EnsembleVoting:
         transformed_x_knn, old_knn = self.scale_transform(f"{self.filtered_out}/knn_features.csv", "random_30")
 
         pred_knn_20 = knn_20.predict(transformed_x_knn)
-        pred_knn_80 = knn_70.predict(transformed_x_knn)
+        pred_knn_80 = knn_80.predict(transformed_x_knn)
 
         knn[20] = pred_knn_20
         knn[80] = pred_knn_80
