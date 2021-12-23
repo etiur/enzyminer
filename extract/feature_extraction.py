@@ -469,13 +469,7 @@ class ReadFeatures:
             os.makedirs(self.filtered_out)
         # write the new features to csv
         svc_columns = list(svc.columns)
-        svc_columns[1] = svc_columns[0]
-        svc_columns[3] = svc_columns[2]
         knn_columns = list(knn.columns)
-        knn_columns[3] = knn_columns[0]
-        knn_columns[2] = knn_columns[1]
-        knn_columns[6] = knn_columns[4]
-        knn_columns[9] = knn_columns[5]
         features_svc = self.features[svc_columns]
         features_knn = self.features[knn_columns]
         features_svc.to_csv(f"{self.filtered_out}/svc_features.csv", header=True)
