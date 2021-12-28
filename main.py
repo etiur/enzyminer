@@ -149,8 +149,10 @@ class WriteSh:
                      "module purge && module load gcc/7.2.0 blast/2.11.0 impi/2018.1 mkl/2018.1 python/3.7.4\n",
                      'echo "Start at $(date)"\n', 'echo "-------------------------"\n']
             argument_list = []
-            arguments = f"-f {self.fasta_dir} -p {self.pssm} -n {self.num_thread} -num {num} "
+            arguments = f"-f {self.fasta_dir} -p {self.pssm} -n {self.num_thread} "
             argument_list.append(arguments)
+            if type(num) == int:
+                argument_list.append(f"-num {num}")
             if self.parallel:
                 argument_list.append("-pa ")
             if self.dbout != "/gpfs/projects/bsc72/ruite/enzyminer/database/uniref50":
