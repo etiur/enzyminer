@@ -1,5 +1,7 @@
 import argparse
 import os
+import shutil
+
 from Bio import SeqIO
 from Bio.SeqIO import FastaIO
 import shlex
@@ -126,7 +128,7 @@ class ExtractFeatures:
                         fasta_out.write_file(batch)
                 return True
             else:
-                os.rename(self.fasta_file, f"{self.base}/group_1.fasta")
+                shutil.copyfile(self.fasta_file, f"{self.base}/group_1.fasta")
                 return False
 
     def ifeature_long(self, fasta_file):
