@@ -72,11 +72,14 @@ class ExtractFeatures:
         possum_out: str, optional
             A directory for the extraction results from possum
         """
-        self.fasta_file = fasta_file
-        if dirname(self.fasta_file) != "":
-            self.base = dirname(self.fasta_file)
+        if dirname(fasta_file) != "":
+            self.base = dirname(fasta_file)
         else:
             self.base = "."
+        if os.path.exists(f"{self.base}/no_short.fasta"):
+            self.fasta_file = f"{self.base}/no_short.fasta"
+        else:
+            self.fasta_file = fasta_file
         self.pssm_dir = pssm_dir
         self.fasta_dir = fasta_dir
         self.ifeature = f"{ifeature_dir}/iFeature.py"
@@ -384,16 +387,25 @@ class ReadFeatures:
         """
         # ifeature features
         amphy = [pd.read_csv(f"{self.ifeature_out}/APAAC_{i+1}.tsv", sep="\t", index_col=0) for i in range(length)]
-        amphy = pd.concat(amphy)
         comp_space_aa_group_pairs = [pd.read_csv(f"{self.ifeature_out}/CKSAAGP_{i+1}.tsv", sep="\t", index_col=0) for i in range(length)]
-        comp_space_aa_group_pairs = pd.concat(comp_space_aa_group_pairs)
         distribution = [pd.read_csv(f"{self.ifeature_out}/CTDD_{i+1}.tsv", sep="\t", index_col=0) for i in range(length)]
-        distribution = pd.concat(distribution)
         geary = [pd.read_csv(f"{self.ifeature_out}/Geary_{i+1}.tsv", sep="\t", index_col=0) for i in range(length)]
-        geary = pd.concat(geary)
-        geary.columns = [f"{x}_geary" for x in geary.columns]
         moran = [pd.read_csv(f"{self.ifeature_out}/Moran_{i+1}.tsv", sep="\t", index_col=0) for i in range(length)]
-        moran = pd.concat(moran)
+        # concat features if length > 1 else return the dataframe
+        if length > 1:
+            moran = pd.concat(moran)
+            geary = pd.concat(geary)
+            amphy = pd.concat(amphy)
+            distribution = pd.concat(distribution)
+            comp_space_aa_group_pairs = pd.concat(comp_space_aa_group_pairs)
+        else:
+            moran = moran[0]
+            geary = geary[0]
+            amphy = amphy[0]
+            distribution = distribution[0]
+            comp_space_aa_group_pairs = comp_space_aa_group_pairs[0]
+        # change the column names
+        geary.columns = [f"{x}_geary" for x in geary.columns]
         moran.columns = [f"{x}_moran" for x in moran.columns]
         # concat the features
         all_data = pd.concat([amphy, geary, moran, comp_space_aa_group_pairs, distribution], axis=1)
@@ -409,31 +421,42 @@ class ReadFeatures:
             An array of the indices for the possum features
         """
         # reads features of possum
-        dp_pssm = [pd.read_csv(f"{self.possum_out}/dp_pssm_{i+1}.csv", chunksize=3_000) for i in range(length)]
-        dp_pssm = pd.concat(dp_pssm)
-        dp_pssm.index = ID
+        dp_pssm = [pd.read_csv(f"{self.possum_out}/dp_pssm_{i+1}.csv") for i in range(length)]
         pssm_cc = [pd.read_csv(f"{self.possum_out}/pssm_cc_{i+1}.csv") for i in range(length)]
-        pssm_cc = pd.concat(pssm_cc)
-        pssm_cc.index = ID
         pssm_composition = [pd.read_csv(f"{self.possum_out}/pssm_composition_{i+1}.csv") for i in range(length)]
-        pssm_composition = pd.concat(pssm_composition)
-        pssm_composition.index = ID
         tpc = [pd.read_csv(f"{self.possum_out}/tpc_{i+1}.csv") for i in range(length)]
-        tpc = pd.concat(tpc)
-        tpc.index = ID
         tri_gram_pssm = [pd.read_csv(f"{self.possum_out}/tri_gram_pssm_{i+1}.csv") for i in range(length)]
-        tri_gram_pssm = pd.concat(tri_gram_pssm)
-        tri_gram_pssm.index = ID
         bigrams_pssm = [pd.read_csv(f"{self.possum_out}/k_separated_bigrams_pssm_{i+1}.csv") for i in range(length)]
-        bigrams_pssm = pd.concat(bigrams_pssm)
-        bigrams_pssm.index = ID
         pse_pssm_3 = [pd.read_csv(f"{self.possum_out}/pse_pssm_3_{i+1}.csv") for i in range(length)]
-        pse_pssm_3 = pd.concat(pse_pssm_3)
+        # concat if length > 1 else return the dataframe
+        if length > 1:
+            dp_pssm = pd.concat(dp_pssm)
+            pssm_cc = pd.concat(pssm_cc)
+            pssm_composition = pd.concat(pssm_composition)
+            tpc = pd.concat(tpc)
+            tri_gram_pssm = pd.concat(tri_gram_pssm)
+            bigrams_pssm = pd.concat(bigrams_pssm)
+            pse_pssm_3 = pd.concat(pse_pssm_3)
+        else:
+            dp_pssm = dp_pssm[0]
+            pssm_cc = pssm_cc[0]
+            pssm_composition = pssm_composition[0]
+            tpc = tpc[0]
+            tri_gram_pssm = tri_gram_pssm[0]
+            bigrams_pssm = bigrams_pssm[0]
+            pse_pssm_3 = pse_pssm_3[0]
+
+        # change the index and columns
+        dp_pssm.index = ID
+        pssm_cc.index = ID
+        pssm_composition.index = ID
+        tpc.index = ID
+        tri_gram_pssm.index = ID
+        bigrams_pssm.index = ID
         index = pse_pssm_3.columns
         index_3 = [f"{x}_3" for x in index]
         pse_pssm_3.index = ID
         pse_pssm_3.columns = index_3
-
         # Possum features
         feature = [dp_pssm, bigrams_pssm, pssm_cc, pssm_composition, tpc, tri_gram_pssm, pse_pssm_3]
         everything = pd.concat(feature, axis=1)
@@ -507,6 +530,10 @@ def extract_and_filter(fasta_file=None, pssm_dir="pssm", fasta_dir="fasta_files"
     run: str
         which programme to run
     """
+    # check that the number of fasta files and pssm files are equal
+    fasta = os.listdir(f"{fasta_dir}")
+    pssm = os.listdir(f"{pssm_dir}")
+    assert len(fasta) == len(pssm), "Difference in the number of fasta files and pssm files"
     # Feature extraction
     if not filter_only:
         extract = ExtractFeatures(fasta_file, pssm_dir, fasta_dir, ifeature_out, possum_out, ifeature_dir, thread, run,
