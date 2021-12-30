@@ -18,18 +18,14 @@ def arg_parse():
                         default="filtered_features")
     parser.add_argument("-nss", "--number_similar_samples", required=False, default=1, type=int,
                         help="The number of similar training samples to filter the predictions")
-    parser.add_argument("-c", "--csv_name", required=False,
-                        default="results/common_doamin.csv",
-                        help="The name of the csv file for the ensemble prediction")
     parser.add_argument("-i", "--fasta_file", help="The fasta file path")
-    parser.add_argument("-ps", "--positive_sequences", required=False,
-                        default="results/positive.fasta", help="The name for the fasta file with the positive sequences")
-    parser.add_argument("-ns", "--negative_sequences", required=False,
-                        default="results/negative.fasta", help="The name for the fasta file with negative sequences")
+    parser.add_argument("-rs", "--res_dir", required=False,
+                        default="results", help="The name for the folder where to store the prediction results")
+    parser.add_argument("-st", "--strict", required=False, action="store_false",
+                        help="To use a strict voting scheme or not, default to true")
     args = parser.parse_args()
 
-    return [args.filtered_out, args.number_similar_samples, args.csv_name, args.fasta_file, args.positive_sequences,
-            args.negative_sequences]
+    return [args.filtered_out, args.number_similar_samples, args.fasta_file, args.res_dir, args.strict]
 
 
 class EnsembleVoting:
@@ -87,10 +83,10 @@ class EnsembleVoting:
         svc_20 = joblib.load(f"{self.models}/svc_20.pkl")
         svc_80 = joblib.load(f"{self.models}/svc_80.pkl")
         ridge_20 = joblib.load(f"{self.models}/ridge_20.pkl")
-        ridge_40 = joblib.load(f"{self.models}/ridge_20.pkl")
+        ridge_40 = joblib.load(f"{self.models}/ridge_40.pkl")
         ridge_80 = joblib.load(f"{self.models}/ridge_80.pkl")
         knn_20 = joblib.load(f"{self.models}/knn_20.pkl")
-        knn_80 = joblib.load(f"{self.models}/knn_80.pkl")
+        knn_90 = joblib.load(f"{self.models}/knn_90.pkl")
 
         # predict ch2_20 features
         transformed_x, old_svc = self.scale_transform(f"{self.filtered_out}/svc_features.csv", "ch2_20")
@@ -111,10 +107,10 @@ class EnsembleVoting:
         transformed_x_knn, old_knn = self.scale_transform(f"{self.filtered_out}/knn_features.csv", "random_30")
 
         pred_knn_20 = knn_20.predict(transformed_x_knn)
-        pred_knn_80 = knn_80.predict(transformed_x_knn)
+        pred_knn_90 = knn_90.predict(transformed_x_knn)
 
         knn[20] = pred_knn_20
-        knn[80] = pred_knn_80
+        knn[90] = pred_knn_90
 
         return svc, ridge, knn, transformed_x, old_svc, transformed_x_knn, old_knn
 
@@ -129,41 +125,19 @@ class EnsembleVoting:
         """
         vote_ = []
         index = []
-        if len(args) == 2:
-            mean = np.mean(args, axis=0)
-            for s, x in enumerate(mean):
-                if x == 1 or x == 0:
-                    vote_.append(int(x))
-                else:
-                    vote_.append(args[-1][s])
-                    index.append(s)  # keep the index of non unanimous predictions
-
-        elif len(args) % 2 == 1:
-            mean = np.mean(args, axis=0)
-            for s, x in enumerate(mean):
-                if x == 1 or x == 0:
-                    vote_.append(int(x))
-                elif x > 0.5:
-                    vote_.append(1)
-                    index.append(s)
-                else:
-                    vote_.append(0)
-                    index.append(s)
-
-        else:
-            mean = np.mean(args, axis=0)
-            for s, x in enumerate(mean):
-                if x == 1 or x == 0:
-                    vote_.append(int(x))
-                elif x > 0.5:
-                    vote_.append(1)
-                    index.append(s)
-                elif x < 0.5:
-                    vote_.append(0)
-                    index.append(s)
-                else:
-                    vote_.append(args[-1][s])
-                    index.append(s)
+        mean = np.mean(args, axis=0)
+        for s, x in enumerate(mean):
+            if x == 1 or x == 0:
+                vote_.append(int(x))
+            elif x > 0.5:
+                vote_.append(1)
+                index.append(s)
+            elif x < 0.5:
+                vote_.append(0)
+                index.append(s)
+            else:
+                vote_.append(args[-1][s])
+                index.append(s)
 
         return vote_, index
 
@@ -239,7 +213,7 @@ class ApplicabilityDomain():
 
         return self.n_insiders
 
-    def filter(self, prediction, index, min_num=1, path_name="filtered_predictions.csv"):
+    def filter(self, prediction, index, min_num=1, path_name="filtered_predictions.csv", strict=True):
         """
         Filter those predictions that has less than min_num training samples that are within the AD
         prediction: array
@@ -251,10 +225,14 @@ class ApplicabilityDomain():
         min_num: int, optional
             The minimun number of training samples within the AD of the test samples
         """
+        if strict:
+            idx = index[:]
+        else:
+            idx = []
         # filter the predictions and names  based on the specified number of similar training samples
-        filtered_pred = [d[0] for x, d in enumerate(zip(prediction, self.n_insiders)) if d[1] >= min_num and x not in index]
-        filtered_names = [d[0] for y, d in enumerate(zip(self.test_names, self.n_insiders)) if d[1] >= min_num and y not in index]
-        filtered_n_insiders = [d for s, d in enumerate(self.n_insiders) if d >= min_num and s not in index]
+        filtered_pred = [d[0] for x, d in enumerate(zip(prediction, self.n_insiders)) if d[1] >= min_num and x not in idx]
+        filtered_names = [d[0] for y, d in enumerate(zip(self.test_names, self.n_insiders)) if d[1] >= min_num and y not in idx]
+        filtered_n_insiders = [d for s, d in enumerate(self.n_insiders) if d >= min_num and s not in idx]
         pred = pd.Series(filtered_pred, index=filtered_names)
         n_applicability = pd.Series(filtered_n_insiders, index=filtered_names)
         self.pred = pd.concat([pred, n_applicability], axis=1)
@@ -262,8 +240,8 @@ class ApplicabilityDomain():
         self.pred.to_csv(path_name, header=True)
         return self.pred
 
-    def extract(self, fasta_file, pred=None, positive_fasta="results/positive.fasta",
-                negative_fasta="results/negative.fasta"):
+    def extract(self, fasta_file, pred=None, positive_fasta="positive.fasta", negative_fasta="negative.fasta",
+                res_dir="results"):
         """
         A function to extract those test fasta sequences that passed the filter
         fasta_file: str
@@ -272,13 +250,19 @@ class ApplicabilityDomain():
             Predictions
         positive_fasta: str, optional
             The new filtered fasta file with positive predictions
-        negative_fasta
+        negative_fasta: str, optional
             The new filtered fasta file with negative sequences
+        res_dir: str, optional
+            The folder where to keep the prediction results
         """
         if pred is not None:
             self.pred = pred
         # separating the records according to if the prediction is positive or negative
-        with open(f"{dirname(fasta_file)}/no_short.fasta") as inp:
+        if dirname(fasta_file) != "":
+            base = dirname(fasta_file)
+        else:
+            base = "."
+        with open(f"{base}/no_short.fasta") as inp:
             record = SeqIO.parse(inp, "fasta")
             p = 0
             positive = []
@@ -287,6 +271,7 @@ class ApplicabilityDomain():
                 try:
                     if int(self.pred.index[p].split("_")[1]) == ind:
                         seq.id = f"{seq.id}-AD#%${self.pred['AD_number'][p]}"
+                        print(seq)
                         if self.pred["prediction"][p] == 1:
                             positive.append(seq)
                         else:
@@ -295,22 +280,17 @@ class ApplicabilityDomain():
                 except IndexError:
                     break
         # writing the positive and negative fasta sequences to different files
-        if not os.path.exists(dirname(positive_fasta)):
-            os.makedirs(dirname(positive_fasta))
-        if not os.path.exists(dirname(negative_fasta)):
-            os.makedirs(dirname(negative_fasta))
-        with open(positive_fasta, "w") as pos:
+        with open(f"{res_dir}/{positive_fasta}", "w") as pos:
             positive = sorted(positive, reverse=True, key=lambda x: int(x.id.split("#%$")[1]))
             fasta_pos = FastaIO.FastaWriter(pos, wrap=None)
             fasta_pos.write_file(positive)
-        with open(negative_fasta, "w") as neg:
+        with open(f"{res_dir}/{negative_fasta}", "w") as neg:
             negative = sorted(negative, reverse=True, key=lambda x: int(x.id.split("#%$")[1]))
             fasta_neg = FastaIO.FastaWriter(neg, wrap=None)
             fasta_neg.write_file(negative)
 
 
-def vote_and_filter(feature_out, fasta_file, min_num=1,  csv_name="results/common_doamin.csv",
-                    positive="results/positive.fasta", negative="results/negative.fasta"):
+def vote_and_filter(feature_out, fasta_file, min_num=1, res_dir="results", strict=True):
     """
     A class that predicts and then filter the results based on the applicability domain of the model
 
@@ -324,48 +304,44 @@ def vote_and_filter(feature_out, fasta_file, min_num=1,  csv_name="results/commo
         The name for the ensemble prediction file
     min_num: int, optional
         The number of similar training samples
-    positive_fasta: str, optional
-        The new filtered fasta file with positive predictions
-    negative_fasta
-        The new filtered fasta file with negative sequences
+    res_dir: str, optional
+        The folder where to keep the prediction results
     """
-    if not os.path.exists(dirname(csv_name)):
-        os.makedirs(dirname(csv_name))
-    if not os.path.exists(dirname(negative)):
-        os.makedirs(dirname(negative))
-    if not os.path.exists(dirname(positive)):
-        os.makedirs(dirname(positive))
+    if not os.path.exists(res_dir):
+        os.makedirs(res_dir)
 
     ensemble = EnsembleVoting(feature_out)
     # predictions
     svc, ridge, knn, new_svc, X_svc, new_knn, X_knn = ensemble.predicting()
     svc_voting, svc_index = ensemble.vote(svc[20], svc[80])
     ridge_voting, ridge_index = ensemble.vote(ridge[20], ridge[40], ridge[80])
-    knn_voting, knn_index = ensemble.vote(knn[20], knn[80])
-    all_voting, all_index = ensemble.vote(svc[20], svc[80], ridge[20], ridge[40], ridge[80], knn[20], knn[80])
-
-    # applicability domain
+    knn_voting, knn_index = ensemble.vote(knn[20], knn[90])
+    all_voting, all_index = ensemble.vote(svc[20], svc[80], ridge[20], ridge[40], ridge[80], knn[20], knn[90])
+    # applicability domain for scv
     domain_svc = ApplicabilityDomain()
     domain_svc.fit(X_svc)
     domain_svc.predict(new_svc)
-    pred_svc = domain_svc.filter(all_voting, all_index, min_num, f"{dirname(positive)}/svc_domain.csv")
+    pred_svc = domain_svc.filter(all_voting, all_index, min_num, f"{res_dir}/svc_domain.csv", strict)
+    domain_svc.extract(fasta_file, pred_svc, positive_fasta=f"positive_svc.fasta",
+                       negative_fasta=f"negative_svc.fasta", res_dir=res_dir)
 
     domain_knn = ApplicabilityDomain()
     domain_knn.fit(X_knn)
     domain_knn.predict(new_knn)
-    pred_knn = domain_knn.filter(all_voting, all_index,  min_num, f"{dirname(positive)}/knn_domain.csv")
-
+    pred_knn = domain_knn.filter(all_voting, all_index,  min_num, f"{res_dir}/knn_domain.csv", strict)
+    domain_knn.extract(fasta_file, pred_knn, positive_fasta=f"positive_knn.fasta",
+                       negative_fasta=f"negative_knn.fasta", res_dir=res_dir)
     # a common dommain for both
     name_set = set(pred_svc.index).intersection(pred_knn.index)
     name_set = sorted(name_set, key=lambda x: int(x.split("_")[1]))
     common_domain = pred_svc.loc[name_set]
-    common_domain.to_csv(csv_name, header=True)
-    domain_knn.extract(fasta_file, common_domain, positive, negative)
+    common_domain.to_csv(f"{res_dir}/common_domain.csv", header=True)
+    domain_knn.extract(fasta_file, common_domain, res_dir=res_dir)
 
 
 def main():
-    feature_out, min_num, csv_name, fasta_file, positive, negative = arg_parse()
-    vote_and_filter(feature_out, fasta_file, min_num, csv_name, positive, negative)
+    feature_out, min_num, fasta_file, res_dir, strict = arg_parse()
+    vote_and_filter(feature_out, fasta_file, min_num, res_dir, strict)
 
 
 if __name__ == "__main__":
