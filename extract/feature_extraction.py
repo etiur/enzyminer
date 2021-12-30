@@ -449,6 +449,7 @@ class ReadFeatures:
             pse_pssm_3 = pse_pssm_3[0]
 
         # change the index and columns
+        assert len(dp_pssm) == ID, "Difference in length between possum and ifeature Features "
         dp_pssm.index = ID
         pssm_cc.index = ID
         pssm_composition.index = ID
@@ -532,10 +533,6 @@ def extract_and_filter(fasta_file=None, pssm_dir="pssm", fasta_dir="fasta_files"
     run: str
         which programme to run
     """
-    # check that the number of fasta files and pssm files are equal
-    fasta = os.listdir(f"{fasta_dir}")
-    pssm = os.listdir(f"{pssm_dir}")
-    assert len(fasta) == len(pssm), "Difference in the number of fasta files and pssm files"
     # Feature extraction
     if not filter_only:
         extract = ExtractFeatures(fasta_file, pssm_dir, fasta_dir, ifeature_out, possum_out, ifeature_dir, thread, run,
