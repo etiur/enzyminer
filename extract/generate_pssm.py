@@ -80,11 +80,11 @@ class ExtractPssm:
             if "PSI" not in pssm.read():
                 os.remove(files)
 
-    def fast_check(self):
+    def fast_check(self, num):
         """
         Accelerates the checking of files
         """
-        file = glob.glob(f"{abspath(self.pssm)}/*.pssm")
+        file = glob.glob(f"{abspath(self.pssm)}/seq_{num}*.pssm")
         with Pool(processes=self.num_thread) as executor:
             executor.map(self._check_pssm, file)
 
@@ -112,7 +112,7 @@ class ExtractPssm:
         """
         if not path.exists(f"{abspath(self.pssm)}"):
             os.makedirs(f"{abspath(self.pssm)}")
-        self.fast_check()
+        self.fast_check(num)
         file = glob.glob(f"{abspath(self.fasta_dir)}/seq_{num}*.fsa")
         file.sort(key=lambda x: int(basename(x).replace(".fsa", "").split("_")[1]))
         for files in file:
@@ -124,7 +124,7 @@ class ExtractPssm:
         """
         if not path.exists(f"{abspath(self.pssm)}"):
             os.makedirs(f"{abspath(self.pssm)}")
-        self.fast_check()
+        self.fast_check(num)
         start = time.time()
         # Using the MPI to parallelize
         file = glob.glob(f"{abspath(self.fasta_dir)}/seq_{num}*.fsa")
