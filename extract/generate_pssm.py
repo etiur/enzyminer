@@ -8,10 +8,16 @@ from os.path import basename, dirname, abspath
 import time
 import logging
 from multiprocessing.dummy import Pool
+from subprocess import call
+import shlex
+from Bio import SeqIO
+from Bio.SeqIO import FastaIO
+import shutil
 
 
 def arg_parse():
     parser = argparse.ArgumentParser(description="creates a database and performs psiblast")
+    parser.add_argument("-i", "--fasta_file", help="The fasta file path", required=False)
     parser.add_argument("-f", "--fasta_dir", required=False, help="The directory for the fasta files",
                         default="fasta_files")
     parser.add_argument("-p", "--pssm_dir", required=False, help="The directory for the pssm files",
@@ -24,9 +30,14 @@ def arg_parse():
     parser.add_argument("-num", "--number", required=False, help="a number for the files", default="*")
     parser.add_argument("-pa", "--parallel", required=False, help="if run parallel to generate the pssm files",
                         action="store_true")
+    parser.add_argument("-Po", "--possum_dir", required=False, help="A path to the possum programme",
+                        default="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/")
+    parser.add_argument("-rm", "--remove", required=False, help="To remove the fasta sequences without pssm files",
+                        action="store_true")
     args = parser.parse_args()
 
-    return [args.fasta_dir, args.pssm_dir, args.dbinp, args.dbout, args.num_thread, args.number, args.parallel]
+    return [args.fasta_dir, args.pssm_dir, args.dbinp, args.dbout, args.num_thread, args.number,
+            args.parallel, args.fasta_file, args.possum_dir, args.remove]
 
 
 class ExtractPssm:
@@ -34,7 +45,8 @@ class ExtractPssm:
     A class to extract pssm profiles from protein sequecnes
     """
     def __init__(self, num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbinp=None,
-                 dbout="/gpfs/projects/bsc72/ruite/enzyminer/database/uniref50"):
+                 dbout="/gpfs/projects/bsc72/ruite/enzyminer/database/uniref50", fasta=None,
+                 possum_dir="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/"):
         """
         Initialize the ExtractPssm class
 
@@ -53,12 +65,18 @@ class ExtractPssm:
         dbout: str, optional
             The name of the created databse database
         """
+        self.fasta_file = fasta
         self.pssm = pssm_dir
         self.fasta_dir = fasta_dir
         self.pssm = pssm_dir
         self.dbinp = dbinp
         self.dbout = dbout
         self.num_thread = num_threads
+        self.possum = possum_dir
+        if dirname(fasta) != "":
+            self.base = dirname(fasta)
+        else:
+            self.base = "."
 
     def makedata(self):
         """
@@ -71,6 +89,36 @@ class ExtractPssm:
         stdout_db, stderr_db = blast_db()
 
         return stdout_db, stderr_db
+
+    def clean_fasta(self):
+        """
+        Clean the fasta file
+        """
+        illegal = f"perl {self.possum}/utils/removeIllegalSequences.pl -i {self.fasta_file} -o {self.base}/no_illegal.fasta"
+        short = f"perl {self.possum}/utils/removeShortSequences.pl -i {self.base}/no_illegal.fasta -o {self.base}/no_short.fasta -n 100"
+        call(shlex.split(illegal), close_fds=False)
+        call(shlex.split(short), close_fds=False)
+
+    def separate_single(self):
+        """
+        A function that separates the fasta files into individual files
+
+        Returns
+        _______
+        file: iterator
+            An iterator that stores the single-record fasta files
+        """
+        if not os.path.exists(f"{self.fasta_dir}"):
+            os.makedirs(f"{self.fasta_dir}")
+        with open(f"{self.base}/no_short.fasta") as inp:
+            record = SeqIO.parse(inp, "fasta")
+            count = 1
+            # write the record into new fasta files
+            for seq in record:
+                with open(f"{self.fasta_dir}/seq_{count}.fsa", "w") as split:
+                    fasta_out = FastaIO.FastaWriter(split, wrap=None)
+                    fasta_out.write_record(seq)
+                count += 1
 
     def _check_pssm(self, files):
         """
@@ -134,9 +182,31 @@ class ExtractPssm:
         end = time.time()
         logging.info(f"it took {end-start} to finish all the files")
 
+    def remove_notpssm_sequences(self):
+        if not os.path.exists("removed_dir"):
+            os.makedirs("removed_dir")
+        # I search for fasta files that doesn't have pssm files
+        pssm_file = set(map(lambda x: basename(x.replace(".pssm", "")), glob.glob(f"{abspath(self.pssm)}/seq_*.pssm")))
+        fasta_file = set(map(lambda x: basename(x.replace(".fsa", "")), glob.glob(f"{abspath(self.fasta_dir)}/seq_*.fsa")))
+        difference = sorted(list(fasta_file.difference(pssm_file)), key=lambda x: int(x.split("_")[1]), reverse=True)
+        with open(f"{self.base}/no_short.fasta") as inp:
+            record = SeqIO.parse(inp, "fasta")
+            record_list = list(record)
+            # I eliminate the sequences from the input fasta file and move the single fasta sequences to another folder
+            for files in difference:
+                num = int(files.split("_")[1]) - 1
+                del record_list[num]
+                shutil.move(f"{abspath(self.fasta_dir)}/{files}.fsa", f"{abspath('removed_dir')}/{files}.fsa")
+            # I rename the input fasta file so to create a new input fasta file with the correct sequences
+            os.rename(f"{self.base}/no_short.fasta", f"{self.base}/no_short_before_pssm.fasta")
+            with open(f"{self.base}/no_short.fasta", "w") as out:
+                fasta_out = FastaIO.FastaWriter(out, wrap=None)
+                fasta_out.write_file(record_list)
+
 
 def generate_pssm(num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbinp=None,
-                  dbout="/gpfs/projects/bsc72/ruite/enzyminer/database/uniref50", num="*", parallel=False):
+                  dbout="/gpfs/projects/bsc72/ruite/enzyminer/database/uniref50", num="*", parallel=False, fasta=None,
+                  possum_dir="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/", remove=False):
     """
     A function that creates protein databases, generates the pssms and returns the list of files
 
@@ -157,18 +227,24 @@ def generate_pssm(num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbi
     parallel: bool, optional
         True if use parallel to run the generate_pssm
     """
-    pssm = ExtractPssm(num_threads, fasta_dir, pssm_dir, dbinp, dbout)
-    if dbinp and dbout:
-        pssm.makedata()
-    if not parallel:
-        pssm.run_generate(num)
+    pssm = ExtractPssm(num_threads, fasta_dir, pssm_dir, dbinp, dbout, fasta, possum_dir)
+    if remove:
+        pssm.remove_notpssm_sequences()
     else:
-        pssm.parallel(num)
+        if dbinp and dbout:
+            pssm.makedata()
+        if fasta and not os.path.exists(f"{fasta_dir}/seq_3.fsa"):
+            pssm.clean_fasta()
+            pssm.separate_single()
+        if not parallel:
+            pssm.run_generate(num)
+        else:
+            pssm.parallel(num)
 
 
 def main():
-    fasta_dir, pssm_dir, dbinp, dbout, num_thread, num, parallel = arg_parse()
-    generate_pssm(num_thread, fasta_dir, pssm_dir, dbinp, dbout, num, parallel)
+    fasta_dir, pssm_dir, dbinp, dbout, num_thread, num, parallel, fasta_file, possum_dir, remove = arg_parse()
+    generate_pssm(num_thread, fasta_dir, pssm_dir, dbinp, dbout, num, parallel, fasta_file, possum_dir, remove)
 
 
 if __name__ == "__main__":
