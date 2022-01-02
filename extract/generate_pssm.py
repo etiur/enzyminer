@@ -183,6 +183,10 @@ class ExtractPssm:
         logging.info(f"it took {end-start} to finish all the files")
 
     def remove_notpssm_sequences(self):
+        """
+        A function that removes the fasta sequences that psiblast cannot generate pssm files from,
+        from the input fasta file.
+        """
         if not os.path.exists("removed_dir"):
             os.makedirs("removed_dir")
         # I search for fasta files that doesn't have pssm files
