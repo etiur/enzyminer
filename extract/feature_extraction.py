@@ -1,7 +1,6 @@
 import argparse
 import os
 import shutil
-
 from Bio import SeqIO
 from Bio.SeqIO import FastaIO
 import shlex
@@ -33,7 +32,7 @@ def arg_parse():
     parser.add_argument("-on", "--filter_only", required=False, help="true if you already have the features",
                         action="store_true")
     parser.add_argument("-er", "--extraction_restart", required=False, help="The file to restart the extraction with")
-    parser.add_argument("-lg", "--long", required=False, help="true you have to restart from the long commands",
+    parser.add_argument("-lg", "--long", required=False, help="true when restarting from the long commands",
                         action="store_true")
     parser.add_argument("-r", "--run", required=False, choices=("possum", "ifeature", "both"), default="both",
                         help="run possum or ifeature extraction")
