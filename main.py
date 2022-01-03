@@ -15,7 +15,8 @@ def arg_parse():
                         default="fasta_files")
     parser.add_argument("-id", "--ifeature_dir", required=False, help="Path to the iFeature programme folder",
                         default="/gpfs/projects/bsc72/ruite/enzyminer/iFeature")
-    parser.add_argument("-Po", "--possum_dir", required=False, help="A path to the possum programme")
+    parser.add_argument("-Po", "--possum_dir", required=False, help="A path to the possum programme",
+                        default="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/")
     parser.add_argument("-io", "--ifeature_out", required=False, help="The directory where the ifeature features are",
                         default="ifeature_features")
     parser.add_argument("-po", "--possum_out", required=False, help="The directory for the possum extractions",
@@ -61,7 +62,7 @@ def arg_parse():
 class WriteSh:
     def __init__(self, fasta=None, fasta_dir="fasta_files", pssm_dir="pssm", num_threads=100, dbinp=None,
                  dbout="/gpfs/projects/bsc72/ruite/enzyminer/database/uniref50", run_path="run_files",
-                 possum_dir=None, parallel=False, remove=False):
+                 possum_dir="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/", parallel=False, remove=False):
         """
         Initialize the ExtractPssm class
 
@@ -112,7 +113,7 @@ class WriteSh:
                 argument_list.append(f"-i {self.fasta_file} ")
             if type(num) == int:
                 argument_list.append(f"-num {num} ")
-            if self.possum:
+            if self.possum != "/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/":
                 argument_list.append(f"-Po {self.possum} ")
             if self.parallel:
                 argument_list.append("-pa ")
