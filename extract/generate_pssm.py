@@ -73,7 +73,7 @@ class ExtractPssm:
         self.dbout = dbout
         self.num_thread = num_threads
         self.possum = possum_dir
-        if dirname(fasta) != "":
+        if fasta and dirname(fasta) != "":
             self.base = dirname(fasta)
         else:
             self.base = "."
