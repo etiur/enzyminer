@@ -271,7 +271,6 @@ class ApplicabilityDomain():
                 try:
                     if int(self.pred.index[p].split("_")[1]) == ind:
                         seq.id = f"{seq.id}-AD#%${self.pred['AD_number'][p]}"
-                        print(seq)
                         if self.pred["prediction"][p] == 1:
                             positive.append(seq)
                         else:
