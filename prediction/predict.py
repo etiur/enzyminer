@@ -210,7 +210,7 @@ class ApplicabilityDomain():
 
         return self.n_insiders
 
-    def filter(self, prediction, index, min_num=1, path_name="filtered_predictions.csv", strict=True):
+    def filter(self, prediction, index, min_num=1, path_name="filtered_predictions.parquet", strict=True):
         """
         Filter those predictions that has less than min_num training samples that are within the AD
 
@@ -237,7 +237,7 @@ class ApplicabilityDomain():
         n_applicability = pd.Series(filtered_n_insiders, index=filtered_names)
         self.pred = pd.concat([pred, n_applicability], axis=1)
         self.pred.columns = ["prediction", "AD_number"]
-        self.pred.to_csv(path_name, header=True)
+        self.pred.to_parquet(path_name)
         return self.pred
 
     def separate_negative_positive(self, fasta_file, pred=None):
@@ -295,8 +295,8 @@ class ApplicabilityDomain():
         pred["AD_number"] = ad
         return pred
 
-    def extract(self, fasta_file, pred1=None, pred2=None, positive_fasta="positive.fasta", negative_fasta="negative.fasta",
-                res_dir="results"):
+    def extract(self, fasta_file, pred1=None, pred2=None, positive_fasta="positive.fasta",
+                negative_fasta="negative.fasta", res_dir="results"):
         """
         A function to extract those test fasta sequences that passed the filter
 
@@ -359,7 +359,7 @@ def vote_and_filter(feature_out, fasta_file, min_num=1, res_dir="results", stric
     domain_svc.fit(X_svc)
     domain_svc.predict(new_svc)
     # return the prediction after the applicability domain filter of SVC
-    pred_svc = domain_svc.filter(all_voting, all_index, min_num, f"{res_dir}/svc_domain.csv", strict)
+    pred_svc = domain_svc.filter(all_voting, all_index, min_num, f"{res_dir}/svc_domain.parquet", strict)
     domain_svc.extract(fasta_file, pred_svc, positive_fasta=f"positive_svc.fasta",
                        negative_fasta=f"negative_svc.fasta", res_dir=res_dir)
     # applicability domain for KNN
@@ -367,7 +367,7 @@ def vote_and_filter(feature_out, fasta_file, min_num=1, res_dir="results", stric
     domain_knn.fit(X_knn)
     domain_knn.predict(new_knn)
     # return the prediction after the applicability domain filter of KNN
-    pred_knn = domain_knn.filter(all_voting, all_index,  min_num, f"{res_dir}/knn_domain.csv", strict)
+    pred_knn = domain_knn.filter(all_voting, all_index,  min_num, f"{res_dir}/knn_domain.parquet", strict)
     domain_knn.extract(fasta_file, pred_knn, positive_fasta=f"positive_knn.fasta",
                        negative_fasta=f"negative_knn.fasta", res_dir=res_dir)
     # Then filter again to see which sequences are within the AD of both algorithms since it is an ensemble classifier
@@ -375,7 +375,7 @@ def vote_and_filter(feature_out, fasta_file, min_num=1, res_dir="results", stric
     name_set = sorted(name_set, key=lambda x: int(x.split("_")[1]))
     knn_set = pred_knn.loc[name_set]
     common_domain = pred_svc.loc[name_set]
-    common_domain.to_csv(f"{res_dir}/common_domain.csv", header=True)
+    common_domain.to_parquet(f"{res_dir}/common_domain.parquet")
     # the positive sequences extracted will have the AD of the SVC
     domain_knn.extract(fasta_file, common_domain, knn_set, res_dir=res_dir)
 
