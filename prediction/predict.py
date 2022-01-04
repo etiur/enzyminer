@@ -132,11 +132,8 @@ class EnsembleVoting:
             elif x > 0.5:
                 vote_.append(1)
                 index.append(s)
-            elif x < 0.5:
+            elif x <= 0.5:
                 vote_.append(0)
-                index.append(s)
-            else:
-                vote_.append(args[-1][s])
                 index.append(s)
 
         return vote_, index
@@ -216,6 +213,9 @@ class ApplicabilityDomain():
     def filter(self, prediction, index, min_num=1, path_name="filtered_predictions.csv", strict=True):
         """
         Filter those predictions that has less than min_num training samples that are within the AD
+
+        Parameters
+        ___________
         prediction: array
             An array of the predictions
         index: array
@@ -240,20 +240,19 @@ class ApplicabilityDomain():
         self.pred.to_csv(path_name, header=True)
         return self.pred
 
-    def extract(self, fasta_file, pred=None, positive_fasta="positive.fasta", negative_fasta="negative.fasta",
-                res_dir="results"):
+    def separate_negative_positive(self, fasta_file, pred=None):
         """
-        A function to extract those test fasta sequences that passed the filter
+        Parameters
+        ______________
         fasta_file: str
-            The path to the test fasta sequences
-        pred: pandas Dataframe, optional
-            Predictions
-        positive_fasta: str, optional
-            The new filtered fasta file with positive predictions
-        negative_fasta: str, optional
-            The new filtered fasta file with negative sequences
-        res_dir: str, optional
-            The folder where to keep the prediction results
+            The input fasta file
+        pred: list, optional
+            The predictions
+
+        Return
+        ________
+        positive: list[Bio.SeqIO]
+        negative: list[Bio.SeqIO]
         """
         if pred is not None:
             self.pred = pred
@@ -278,13 +277,52 @@ class ApplicabilityDomain():
                         p += 1
                 except IndexError:
                     break
+
+        return positive, negative
+
+    def find_max_ad(self, pred1, pred2):
+        """
+        find the maximum applicability domain of the 2 preds
+        """
+        assert len(pred1) == len(pred2), "Both predictions has different length"
+        ad = []
+        pred = pred1.copy()
+        for idx in pred1.index:
+            if pred1["AD_number"].loc[idx] <= pred2["AD_number"].loc[idx]:
+                ad.append(f'{pred1["AD_number"].loc[idx]}-svc')
+            else:
+                ad.append(f'{pred2["AD_number"].loc[idx]}-knn')
+        pred["AD_number"] = ad
+        return pred
+
+    def extract(self, fasta_file, pred1=None, pred2=None, positive_fasta="positive.fasta", negative_fasta="negative.fasta",
+                res_dir="results"):
+        """
+        A function to extract those test fasta sequences that passed the filter
+
+        Parameters
+        ___________
+        fasta_file: str
+            The path to the test fasta sequences
+        pred: pandas Dataframe, optional
+            Predictions
+        positive_fasta: str, optional
+            The new filtered fasta file with positive predictions
+        negative_fasta: str, optional
+            The new filtered fasta file with negative sequences
+        res_dir: str, optional
+            The folder where to keep the prediction results
+        """
+        if pred2 is not None:
+            pred1 = self.find_max_ad(pred1, pred2)
+        positive, negative = self.separate_negative_positive(fasta_file, pred1)
         # writing the positive and negative fasta sequences to different files
         with open(f"{res_dir}/{positive_fasta}", "w") as pos:
-            positive = sorted(positive, reverse=True, key=lambda x: int(x.id.split("#%$")[1]))
+            positive = sorted(positive, reverse=True, key=lambda x: int(x.id.split("#%$")[1].split("-")[0]))
             fasta_pos = FastaIO.FastaWriter(pos, wrap=None)
             fasta_pos.write_file(positive)
         with open(f"{res_dir}/{negative_fasta}", "w") as neg:
-            negative = sorted(negative, reverse=True, key=lambda x: int(x.id.split("#%$")[1]))
+            negative = sorted(negative, reverse=True, key=lambda x: int(x.id.split("#%$")[1].split("-")[0]))
             fasta_neg = FastaIO.FastaWriter(neg, wrap=None)
             fasta_neg.write_file(negative)
 
@@ -320,22 +358,26 @@ def vote_and_filter(feature_out, fasta_file, min_num=1, res_dir="results", stric
     domain_svc = ApplicabilityDomain()
     domain_svc.fit(X_svc)
     domain_svc.predict(new_svc)
+    # return the prediction after the applicability domain filter of SVC
     pred_svc = domain_svc.filter(all_voting, all_index, min_num, f"{res_dir}/svc_domain.csv", strict)
     domain_svc.extract(fasta_file, pred_svc, positive_fasta=f"positive_svc.fasta",
                        negative_fasta=f"negative_svc.fasta", res_dir=res_dir)
-
+    # applicability domain for KNN
     domain_knn = ApplicabilityDomain()
     domain_knn.fit(X_knn)
     domain_knn.predict(new_knn)
+    # return the prediction after the applicability domain filter of KNN
     pred_knn = domain_knn.filter(all_voting, all_index,  min_num, f"{res_dir}/knn_domain.csv", strict)
     domain_knn.extract(fasta_file, pred_knn, positive_fasta=f"positive_knn.fasta",
                        negative_fasta=f"negative_knn.fasta", res_dir=res_dir)
-    # a common dommain for both
+    # Then filter again to see which sequences are within the AD of both algorithms since it is an ensemble classifier
     name_set = set(pred_svc.index).intersection(pred_knn.index)
     name_set = sorted(name_set, key=lambda x: int(x.split("_")[1]))
+    knn_set = pred_knn.loc[name_set]
     common_domain = pred_svc.loc[name_set]
     common_domain.to_csv(f"{res_dir}/common_domain.csv", header=True)
-    domain_knn.extract(fasta_file, common_domain, res_dir=res_dir)
+    # the positive sequences extracted will have the AD of the SVC
+    domain_knn.extract(fasta_file, common_domain, knn_set, res_dir=res_dir)
 
 
 def main():
