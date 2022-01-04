@@ -448,7 +448,7 @@ class ReadFeatures:
             pse_pssm_3 = pse_pssm_3[0]
 
         # change the index and columns
-        assert len(dp_pssm) == ID, "Difference in length between possum and ifeature Features "
+        assert len(dp_pssm) == len(ID), "Difference in length between possum and ifeature Features "
         dp_pssm.index = ID
         pssm_cc.index = ID
         pssm_composition.index = ID

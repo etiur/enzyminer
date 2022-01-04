@@ -193,21 +193,21 @@ class ExtractPssm:
         pssm_file = set(map(lambda x: basename(x.replace(".pssm", "")), glob.glob(f"{abspath(self.pssm)}/seq_*.pssm")))
         fasta_file = set(map(lambda x: basename(x.replace(".fsa", "")), glob.glob(f"{abspath(self.fasta_dir)}/seq_*.fsa")))
         difference = sorted(list(fasta_file.difference(pssm_file)), key=lambda x: int(x.split("_")[1]), reverse=True)
-        if len(difference) > 0:
-            with open(f"{self.base}/no_short.fasta") as inp:
-                record = SeqIO.parse(inp, "fasta")
-                record_list = list(record)
-                # I eliminate the sequences from the input fasta file and move the single fasta sequences
-                # to another folder
-                for files in difference:
-                    num = int(files.split("_")[1]) - 1
-                    del record_list[num]
-                    shutil.move(f"{abspath(self.fasta_dir)}/{files}.fsa", f"{abspath('removed_dir')}/{files}.fsa")
+        assert len(difference) > 0, "No need to remove sequences"
+        with open(f"{self.base}/no_short.fasta") as inp:
+            record = SeqIO.parse(inp, "fasta")
+            record_list = list(record)
+            # I eliminate the sequences from the input fasta file and move the single fasta sequences
+            # to another folder
+            for files in difference:
+                num = int(files.split("_")[1]) - 1
+                del record_list[num]
+                shutil.move(f"{abspath(self.fasta_dir)}/{files}.fsa", f"{abspath('removed_dir')}/{files}.fsa")
                 # I rename the input fasta file so to create a new input fasta file with the correct sequences
-                os.rename(f"{self.base}/no_short.fasta", f"{self.base}/no_short_before_pssm.fasta")
-                with open(f"{self.base}/no_short.fasta", "w") as out:
-                    fasta_out = FastaIO.FastaWriter(out, wrap=None)
-                    fasta_out.write_file(record_list)
+            os.rename(f"{self.base}/no_short.fasta", f"{self.base}/no_short_before_pssm.fasta")
+            with open(f"{self.base}/no_short.fasta", "w") as out:
+                fasta_out = FastaIO.FastaWriter(out, wrap=None)
+                fasta_out.write_file(record_list)
 
 
 def generate_pssm(num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbinp=None,
