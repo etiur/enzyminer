@@ -128,6 +128,13 @@ class ExtractPssm:
             if "PSI" not in pssm.read():
                 os.remove(files)
 
+    def _check_output(self, files):
+        name = basename(files).replace(".fsa", "")
+        if not path.exists(f"{abspath(self.pssm)}/{name}.pssm"):
+            if not os.path.exists("removed_dir"):
+                os.makedirs("removed_dir")
+            shutil.move(f"{abspath(self.fasta_dir)}/{name}.fsa", f"{abspath('removed_dir')}/{name}.fsa")
+
     def fast_check(self, num):
         """
         Accelerates the checking of files
@@ -165,6 +172,7 @@ class ExtractPssm:
         file.sort(key=lambda x: int(basename(x).replace(".fsa", "").split("_")[1]))
         for files in file:
             self.generate(files)
+            self._check_output(files)
 
     def parallel(self, num):
         """
