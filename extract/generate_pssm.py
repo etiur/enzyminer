@@ -247,7 +247,7 @@ def generate_pssm(num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbi
     else:
         if dbinp and dbout:
             pssm.makedata()
-        if fasta and not os.path.exists(f"{fasta_dir}/seq_3.fsa"):
+        if fasta and not next(os.scandir(f"{fasta_dir}"), False):
             pssm.clean_fasta()
             pssm.separate_single()
         if not parallel:
