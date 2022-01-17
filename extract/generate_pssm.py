@@ -190,17 +190,14 @@ class ExtractPssm:
         end = time.time()
         logging.info(f"it took {end-start} to finish all the files")
 
-    def remove_notpssm_sequences(self):
+    def remove_sequences_from_input(self):
         """
         A function that removes the fasta sequences that psiblast cannot generate pssm files from,
         from the input fasta file.
         """
-        if not os.path.exists("removed_dir"):
-            os.makedirs("removed_dir")
         # I search for fasta files that doesn't have pssm files
-        pssm_file = set(map(lambda x: basename(x.replace(".pssm", "")), glob.glob(f"{abspath(self.pssm)}/seq_*.pssm")))
-        fasta_file = set(map(lambda x: basename(x.replace(".fsa", "")), glob.glob(f"{abspath(self.fasta_dir)}/seq_*.fsa")))
-        difference = sorted(list(fasta_file.difference(pssm_file)), key=lambda x: int(x.split("_")[1]), reverse=True)
+        fasta_file = list(map(lambda x: basename(x.replace(".fsa", "")), glob.glob(f"{abspath('removed_dir')}/seq_*.fsa")))
+        difference = sorted(fasta_file, key=lambda x: int(x.split("_")[1]), reverse=True)
         assert len(difference) > 0, "No need to remove sequences"
         with open(f"{self.base}/no_short.fasta") as inp:
             record = SeqIO.parse(inp, "fasta")
@@ -210,7 +207,6 @@ class ExtractPssm:
             for files in difference:
                 num = int(files.split("_")[1]) - 1
                 del record_list[num]
-                shutil.move(f"{abspath(self.fasta_dir)}/{files}.fsa", f"{abspath('removed_dir')}/{files}.fsa")
                 # I rename the input fasta file so to create a new input fasta file with the correct sequences
             os.rename(f"{self.base}/no_short.fasta", f"{self.base}/no_short_before_pssm.fasta")
             with open(f"{self.base}/no_short.fasta", "w") as out:
@@ -243,7 +239,7 @@ def generate_pssm(num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbi
     """
     pssm = ExtractPssm(num_threads, fasta_dir, pssm_dir, dbinp, dbout, fasta, possum_dir)
     if remove:
-        pssm.remove_notpssm_sequences()
+        pssm.remove_sequences_from_input()
     else:
         if dbinp and dbout:
             pssm.makedata()
