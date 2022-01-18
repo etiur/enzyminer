@@ -90,21 +90,10 @@ class ExtractFeatures:
         self.thread = thread
         self.run = run
 
-    def _batch_iterator(self, iterator, batch_size):
-        entry = True  # Make sure we loop once
-        while entry:
-            batch = []
-            while len(batch) < batch_size:
-                try:
-                    entry = next(iterator)
-                except StopIteration:
-                    entry = None
-                if entry is None:
-                    # End of file
-                    break
-                batch.append(entry)
-            if batch:
-                yield batch
+    def _batch_iterable(self, iterable, batch_size):
+        length = len(iterable)
+        for ndx in range(0, length, batch_size):
+            yield iterable[ndx:min(ndx + batch_size, length)]
 
     def _separate_bunch(self):
         """
@@ -116,19 +105,17 @@ class ExtractFeatures:
             The number of files to separate the original fasta_file
         """
         with open(f"{self.base}/no_short.fasta") as inp:
-            record = SeqIO.parse(inp, "fasta")
-            record_list = list(record)
-            if len(record_list) > 10_000:
-                record_list.clear()
-                for i, batch in enumerate(self._batch_iterator(record, 10_000)):
+            record = list(SeqIO.parse(inp, "fasta"))
+            if len(record) > 10_000:
+                for i, batch in enumerate(self._batch_iterable(record, 10_000)):
                     filename = f"group_{i+1}.fasta"
                     with open(f"{self.base}/{filename}", "w") as split:
+                        print(f"{self.base}/{filename}")
                         fasta_out = FastaIO.FastaWriter(split, wrap=None)
                         fasta_out.write_file(batch)
-                return True
+                del record
             else:
-                shutil.copyfile(self.fasta_file, f"{self.base}/group_1.fasta")
-                return False
+                shutil.copyfile(f"{self.base}/no_short.fasta", f"{self.base}/group_1.fasta")
 
     def ifeature_long(self, fasta_file):
         """
