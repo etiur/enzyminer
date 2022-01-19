@@ -51,12 +51,14 @@ def arg_parse():
                         help="To use a strict voting scheme or not, default to true")
     parser.add_argument("-rm", "--remove", required=False, help="To remove the fasta sequences without pssm files",
                         action="store_true")
+    parser.add_argument("-v", "--value", required=False, default=0.8, type=float,
+                        help="The voting threshold to be considered positive")
     args = parser.parse_args()
 
     return [args.fasta_file, args.pssm_dir, args.fasta_dir, args.ifeature_dir, args.possum_dir, args.ifeature_out,
             args.possum_out, args.filtered_out, args.dbinp, args.dbout, args.num_thread, args.number_similar_samples,
             args.res_dir, args.restart, args.filter_only, args.extraction_restart, args.long, args.run, args.start,
-            args.end, args.sbatch_path, args.parallel, args.strict, args.remove]
+            args.end, args.sbatch_path, args.parallel, args.strict, args.remove, args.value]
 
 
 class WriteSh:
@@ -151,7 +153,7 @@ class WriteSh:
 def main():
     fasta_file, pssm_dir, fasta_dir, ifeature_dir, possum_dir, ifeature_out, possum_out, filtered_out, dbinp, \
     dbout, num_thread, min_num, res_dir, restart, filter_only, extraction_restart, long, \
-    run, start, end, sbatch_path, parallel, strict, remove = arg_parse()
+    run, start, end, sbatch_path, parallel, strict, remove, value = arg_parse()
     if not restart:
         sh = WriteSh(fasta_file, fasta_dir, pssm_dir, num_thread, dbinp, dbout, sbatch_path, possum_dir, parallel,
                      remove)
@@ -163,9 +165,9 @@ def main():
     elif restart == "feature":
         extract_and_filter(fasta_file, pssm_dir, fasta_dir, ifeature_out, possum_dir, ifeature_dir, possum_out,
                            filtered_out, filter_only, extraction_restart, long, num_thread, run)
-        vote_and_filter(filtered_out, fasta_file, min_num, res_dir, strict)
+        vote_and_filter(filtered_out, fasta_file, min_num, res_dir, strict, value)
     elif restart == "predict":
-        vote_and_filter(filtered_out, fasta_file, min_num, res_dir, strict)
+        vote_and_filter(filtered_out, fasta_file, min_num, res_dir, strict, value)
 
     
 if __name__ == "__main__":

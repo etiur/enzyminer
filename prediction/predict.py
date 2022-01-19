@@ -23,9 +23,11 @@ def arg_parse():
                         default="results", help="The name for the folder where to store the prediction results")
     parser.add_argument("-st", "--strict", required=False, action="store_false",
                         help="To use a strict voting scheme or not, default to true")
+    parser.add_argument("-v", "--value", required=False, default=0.8, type=float,
+                        help="The voting threshold to be considered positive")
     args = parser.parse_args()
 
-    return [args.filtered_out, args.number_similar_samples, args.fasta_file, args.res_dir, args.strict]
+    return [args.filtered_out, args.number_similar_samples, args.fasta_file, args.res_dir, args.strict, args.value]
 
 
 class EnsembleVoting:
@@ -114,7 +116,7 @@ class EnsembleVoting:
 
         return svc, ridge, knn, transformed_x, old_svc, transformed_x_knn, old_knn
 
-    def vote(self, *args):
+    def vote(self, val=0.5, *args):
         """
         Hard voting for the ensembles
 
@@ -129,10 +131,10 @@ class EnsembleVoting:
         for s, x in enumerate(mean):
             if x == 1 or x == 0:
                 vote_.append(int(x))
-            elif x > 0.5:
+            elif x > val:
                 vote_.append(1)
                 index.append(s)
-            elif x <= 0.5:
+            elif x <= val:
                 vote_.append(0)
                 index.append(s)
 
@@ -327,7 +329,7 @@ class ApplicabilityDomain():
             fasta_neg.write_file(negative)
 
 
-def vote_and_filter(feature_out, fasta_file, min_num=1, res_dir="results", strict=True):
+def vote_and_filter(feature_out, fasta_file, min_num=1, res_dir="results", strict=True, val=0.8):
     """
     A class that predicts and then filter the results based on the applicability domain of the model
 
@@ -350,10 +352,10 @@ def vote_and_filter(feature_out, fasta_file, min_num=1, res_dir="results", stric
     ensemble = EnsembleVoting(feature_out)
     # predictions
     svc, ridge, knn, new_svc, X_svc, new_knn, X_knn = ensemble.predicting()
-    svc_voting, svc_index = ensemble.vote(svc[20], svc[80])
-    ridge_voting, ridge_index = ensemble.vote(ridge[20], ridge[40], ridge[80])
-    knn_voting, knn_index = ensemble.vote(knn[20], knn[90])
-    all_voting, all_index = ensemble.vote(svc[20], svc[80], ridge[20], ridge[40], ridge[80], knn[20], knn[90])
+    svc_voting, svc_index = ensemble.vote(0.5, svc[20], svc[80])
+    ridge_voting, ridge_index = ensemble.vote(0.5, ridge[20], ridge[40], ridge[80])
+    knn_voting, knn_index = ensemble.vote(0.5, knn[20], knn[90])
+    all_voting, all_index = ensemble.vote(val, svc[20], svc[80], ridge[20], ridge[40], ridge[80], knn[20], knn[90])
     # applicability domain for scv
     domain_svc = ApplicabilityDomain()
     domain_svc.fit(X_svc)
@@ -371,7 +373,7 @@ def vote_and_filter(feature_out, fasta_file, min_num=1, res_dir="results", stric
     domain_knn.extract(fasta_file, pred_knn, positive_fasta=f"positive_knn.fasta",
                        negative_fasta=f"negative_knn.fasta", res_dir=res_dir)
     # Then filter again to see which sequences are within the AD of both algorithms since it is an ensemble classifier
-    name_set = set(pred_svc.index).intersection(pred_knn.index)
+    name_set = set(pred_svc.index).intersection(set(pred_knn.index))
     name_set = sorted(name_set, key=lambda x: int(x.split("_")[1]))
     knn_set = pred_knn.loc[name_set]
     common_domain = pred_svc.loc[name_set]
@@ -381,8 +383,8 @@ def vote_and_filter(feature_out, fasta_file, min_num=1, res_dir="results", stric
 
 
 def main():
-    feature_out, min_num, fasta_file, res_dir, strict = arg_parse()
-    vote_and_filter(feature_out, fasta_file, min_num, res_dir, strict)
+    feature_out, min_num, fasta_file, res_dir, strict, value = arg_parse()
+    vote_and_filter(feature_out, fasta_file, min_num, res_dir, strict, value)
 
 
 if __name__ == "__main__":
