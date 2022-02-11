@@ -23,7 +23,7 @@ def arg_parse():
                         default="results", help="The name for the folder where to store the prediction results")
     parser.add_argument("-st", "--strict", required=False, action="store_false",
                         help="To use a strict voting scheme or not, default to true")
-    parser.add_argument("-v", "--value", required=False, default=0.8, type=float, choices=(0.8, 0.7, 0.5),
+    parser.add_argument("-v", "--value", required=False, default=0.7, type=float, choices=(0.8, 0.7, 0.5),
                         help="The voting threshold to be considered positive")
     args = parser.parse_args()
 
