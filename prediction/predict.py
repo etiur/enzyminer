@@ -23,7 +23,7 @@ def arg_parse():
                         default="results", help="The name for the folder where to store the prediction results")
     parser.add_argument("-st", "--strict", required=False, action="store_false",
                         help="To use a strict voting scheme or not, default to true")
-    parser.add_argument("-v", "--value", required=False, default=0.8, type=float,
+    parser.add_argument("-v", "--value", required=False, default=0.8, type=float, choices=(0.8, 0.7, 0.5),
                         help="The voting threshold to be considered positive")
     args = parser.parse_args()
 
@@ -157,6 +157,10 @@ class ApplicabilityDomain():
         self.pred = []
         self.dataframe = None
         self.n_insiders = []
+        path_to_esterase = "/gpfs/projects/bsc72/ruite/enzyminer/data/esterase_binary.xlsx"
+        x_svc = pd.read_excel(f"{path_to_esterase}", index_col=0, sheet_name=f"ch2_20", engine='openpyxl')
+        self.training_names = x_svc.index
+        self.ad_indices = []
 
     def fit(self, x_train):
         """
@@ -167,12 +171,12 @@ class ApplicabilityDomain():
         x_train: pandas Dataframe object
         """
         self.x_train = x_train
+        # for each of the training sample calculate the distance to the other samples
         distances = np.array([distance.cdist(np.array(x).reshape(1, -1), self.x_train) for x in self.x_train])
         distances_sorted = [np.sort(d[0]) for d in distances]
-        d_no_ii = [d[1:] for d in distances_sorted]  # not including the distance with itself
+        d_no_ii = [d[1:] for d in distances_sorted]  # not including the distance with itself, which is 0
         k = int(round(pow(len(self.x_train), 1 / 3)))
-
-        d_means = [np.mean(d[:k][0]) for d in d_no_ii]  # medium values
+        d_means = [np.mean(d[:k]) for d in d_no_ii]  # medium values, np.mean(d[:k][0])
         Q1 = np.quantile(d_means, .25)
         Q3 = np.quantile(d_means, .75)
         d_ref = Q3 + 1.5 * (Q3 - Q1)  # setting the reference value
@@ -207,14 +211,57 @@ class ApplicabilityDomain():
         d_train_test = np.array([distance.cdist(np.array(x).reshape(1, -1), self.x_train) for x in self.x_test])
         for i in d_train_test:  # for each sample
             # saving indexes of training with distance < threshold
-            idxs = [j for j, d in enumerate(i[0]) if d <= self.thresholds[j]]
+            idxs = [self.training_names[j] for j, d in enumerate(i[0]) if d <= self.thresholds[j]]
             self.n_insiders.append(len(idxs))  # for each test sample see how many training samples is within the AD
+            idxs = "_".join(idxs)
+            self.ad_indices.append(idxs)
 
-        return self.n_insiders
+        return self.n_insiders, self.ad_indices
 
-    def filter(self, prediction, index, min_num=1, path_name="filtered_predictions.parquet", strict=True):
+    def _sort_models_vote(self, svc, knn, ridge, idx, filtered_names, min_num=1):
         """
-        Filter those predictions that has less than min_num training samples that are within the AD
+        Parameters
+        ----------
+        svc: dict
+            Predictions from SVCs
+        knn: dict
+            Predictions from KNNs
+        ridge: dict
+            Prediction from ridge classifiers
+        idx: list[int]
+            Indices where the votes did not agree
+        filtered_names: list[str]
+            Names of the test samples after the filtering
+        min_num: int
+            The minimum number to be considered of the same applicability domain
+
+        Returns
+        --------
+        object: pd.Dataframe
+            The predictions of each of the models kept in the dataframe
+        """
+        results = {"s20": None, "s80": None, "r20": None, "r40": None, "r80": None,
+                   "k20": None, "k90": None}
+        svc_20 = [d[0] for x, d in enumerate(zip(svc[20], self.n_insiders)) if d[1] >= min_num and x not in idx]
+        svc_80 = [d[0] for x, d in enumerate(zip(svc[80], self.n_insiders)) if d[1] >= min_num and x not in idx]
+        ridge_20 = [d[0] for x, d in enumerate(zip(ridge[20], self.n_insiders)) if d[1] >= min_num and x not in idx]
+        ridge_40 = [d[0] for x, d in enumerate(zip(ridge[40], self.n_insiders)) if d[1] >= min_num and x not in idx]
+        ridge_80 = [d[0] for x, d in enumerate(zip(ridge[80], self.n_insiders)) if d[1] >= min_num and x not in idx]
+        knn_20 = [d[0] for x, d in enumerate(zip(knn[20], self.n_insiders)) if d[1] >= min_num and x not in idx]
+        knn_90 = [d[0] for x, d in enumerate(zip(knn[90], self.n_insiders)) if d[1] >= min_num and x not in idx]
+        results["s20"] = svc_20
+        results["s80"] = svc_80
+        results["r20"] = ridge_20
+        results["r40"] = ridge_40
+        results["r80"] = ridge_80
+        results["k20"] = knn_20
+        results["k90"] = knn_90
+        return pd.DataFrame(results, index=filtered_names)
+
+    def filter(self, prediction, index, svc, knn, ridge, min_num=1, path_name="filtered_predictions.parquet",
+               strict=True):
+        """
+        Filter those predictions that have less than min_num training samples that are within the AD
 
         Parameters
         ___________
@@ -232,13 +279,16 @@ class ApplicabilityDomain():
         else:
             idx = []
         # filter the predictions and names  based on the specified number of similar training samples
+        filtered_indices = [d[0] for x, d in enumerate(zip(self.ad_indices, self.n_insiders)) if d[1] >= min_num and x not in idx]
         filtered_pred = [d[0] for x, d in enumerate(zip(prediction, self.n_insiders)) if d[1] >= min_num and x not in idx]
         filtered_names = [d[0] for y, d in enumerate(zip(self.test_names, self.n_insiders)) if d[1] >= min_num and y not in idx]
         filtered_n_insiders = [d for s, d in enumerate(self.n_insiders) if d >= min_num and s not in idx]
+        name_training_sample = pd.Series(filtered_indices, index=filtered_names)
         pred = pd.Series(filtered_pred, index=filtered_names)
         n_applicability = pd.Series(filtered_n_insiders, index=filtered_names)
-        self.pred = pd.concat([pred, n_applicability], axis=1)
-        self.pred.columns = ["prediction", "AD_number"]
+        models = self._sort_models_vote(svc, knn, ridge, idx, filtered_names, min_num)
+        self.pred = pd.concat([pred, n_applicability, name_training_sample, models], axis=1)
+        self.pred.columns = ["prediction", "AD_number", "AD_names"] + list(models.columns)
         self.pred.to_parquet(path_name)
         return self.pred
 
@@ -271,7 +321,10 @@ class ApplicabilityDomain():
             for ind, seq in enumerate(record):
                 try:
                     if int(self.pred.index[p].split("_")[1]) == ind:
-                        seq.id = f"{seq.id}-AD#%${self.pred['AD_number'][p]}"
+                        col = self.pred[self.pred.columns[3:]].iloc[p]
+                        mean = sum(col) / len(col)
+                        col = [f"{col.index[i]}-{d}" for i, d in enumerate(col)]
+                        seq.id = f"{seq.id}-{'+'.join(col)}:prob#%${mean}-AD#%${self.pred['AD_number'][p]}"
                         if self.pred["prediction"][p] == 1:
                             positive.append(seq)
                         else:
@@ -320,11 +373,12 @@ class ApplicabilityDomain():
         positive, negative = self.separate_negative_positive(fasta_file, pred1)
         # writing the positive and negative fasta sequences to different files
         with open(f"{res_dir}/{positive_fasta}", "w") as pos:
-            positive = sorted(positive, reverse=True, key=lambda x: int(x.id.split("#%$")[1].split("-")[0]))
+            positive = sorted(positive, reverse=True, key=lambda x: (int(x.id.split("#%$")[1]),
+                                                                     int(x.id.split("#%$")[2].split("-")[0])))
             fasta_pos = FastaIO.FastaWriter(pos, wrap=None)
             fasta_pos.write_file(positive)
         with open(f"{res_dir}/{negative_fasta}", "w") as neg:
-            negative = sorted(negative, reverse=True, key=lambda x: int(x.id.split("#%$")[1].split("-")[0]))
+            negative = sorted(negative, reverse=True, key=lambda x: int(x.id.split("#%$")[2].split("-")[0]))
             fasta_neg = FastaIO.FastaWriter(neg, wrap=None)
             fasta_neg.write_file(negative)
 
@@ -352,16 +406,14 @@ def vote_and_filter(feature_out, fasta_file, min_num=1, res_dir="results", stric
     ensemble = EnsembleVoting(feature_out)
     # predictions
     svc, ridge, knn, new_svc, X_svc, new_knn, X_knn = ensemble.predicting()
-    svc_voting, svc_index = ensemble.vote(0.5, svc[20], svc[80])
-    ridge_voting, ridge_index = ensemble.vote(0.5, ridge[20], ridge[40], ridge[80])
-    knn_voting, knn_index = ensemble.vote(0.5, knn[20], knn[90])
-    all_voting, all_index = ensemble.vote(val, svc[20], svc[80], ridge[20], ridge[40], ridge[80], knn[20], knn[90])
+    all_voting, all_index = ensemble.vote(val, *svc.values(), *ridge.values(), *knn.values())
     # applicability domain for scv
     domain_svc = ApplicabilityDomain()
     domain_svc.fit(X_svc)
     domain_svc.predict(new_svc)
     # return the prediction after the applicability domain filter of SVC
-    pred_svc = domain_svc.filter(all_voting, all_index, min_num, f"{res_dir}/svc_domain.parquet", strict)
+    pred_svc = domain_svc.filter(all_voting, all_index, svc, knn, ridge, min_num, f"{res_dir}/svc_domain.parquet",
+                                 strict)
     domain_svc.extract(fasta_file, pred_svc, positive_fasta=f"positive_svc.fasta",
                        negative_fasta=f"negative_svc.fasta", res_dir=res_dir)
     # applicability domain for KNN
@@ -369,7 +421,8 @@ def vote_and_filter(feature_out, fasta_file, min_num=1, res_dir="results", stric
     domain_knn.fit(X_knn)
     domain_knn.predict(new_knn)
     # return the prediction after the applicability domain filter of KNN
-    pred_knn = domain_knn.filter(all_voting, all_index,  min_num, f"{res_dir}/knn_domain.parquet", strict)
+    pred_knn = domain_knn.filter(all_voting, all_index,  svc, knn, ridge, min_num, f"{res_dir}/knn_domain.parquet",
+                                 strict)
     domain_knn.extract(fasta_file, pred_knn, positive_fasta=f"positive_knn.fasta",
                        negative_fasta=f"negative_knn.fasta", res_dir=res_dir)
     # Then filter again to see which sequences are within the AD of both algorithms since it is an ensemble classifier
