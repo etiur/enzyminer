@@ -322,9 +322,9 @@ class ApplicabilityDomain():
                 try:
                     if int(self.pred.index[p].split("_")[1]) == ind:
                         col = self.pred[self.pred.columns[3:]].iloc[p]
-                        mean = sum(col) / len(col)
+                        mean = round(sum(col) / len(col), 2)
                         col = [f"{col.index[i]}-{d}" for i, d in enumerate(col)]
-                        seq.id = f"{seq.id}-{'+'.join(col)}:prob#%${mean}-AD#%${self.pred['AD_number'][p]}"
+                        seq.id = f"{seq.id}-{'+'.join(col)}-#%$prob:{mean}#%$AD:{self.pred['AD_number'][p]}"
                         if self.pred["prediction"][p] == 1:
                             positive.append(seq)
                         else:
@@ -373,12 +373,12 @@ class ApplicabilityDomain():
         positive, negative = self.separate_negative_positive(fasta_file, pred1)
         # writing the positive and negative fasta sequences to different files
         with open(f"{res_dir}/{positive_fasta}", "w") as pos:
-            positive = sorted(positive, reverse=True, key=lambda x: (int(x.id.split("#%$")[1]),
-                                                                     int(x.id.split("#%$")[2].split("-")[0])))
+            positive = sorted(positive, reverse=True, key=lambda x: (float(x.id.split("#%$")[1].split(":")[1]),
+                                                                     int(x.id.split("#%$")[2].split(":")[1].split("-")[0])))
             fasta_pos = FastaIO.FastaWriter(pos, wrap=None)
             fasta_pos.write_file(positive)
         with open(f"{res_dir}/{negative_fasta}", "w") as neg:
-            negative = sorted(negative, reverse=True, key=lambda x: int(x.id.split("#%$")[2].split("-")[0]))
+            negative = sorted(negative, reverse=True, key=lambda x: int(x.id.split("#%$")[2].split(":")[1].split("-")[0]))
             fasta_neg = FastaIO.FastaWriter(neg, wrap=None)
             fasta_neg.write_file(negative)
 
