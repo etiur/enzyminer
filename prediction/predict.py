@@ -80,39 +80,25 @@ class EnsembleVoting:
         svc = {}
         ridge = {}
         knn = {}
-
-        # load the saved models
-        svc_20 = joblib.load(f"{self.models}/svc_20.pkl")
-        svc_80 = joblib.load(f"{self.models}/svc_80.pkl")
-        ridge_20 = joblib.load(f"{self.models}/ridge_20.pkl")
-        ridge_40 = joblib.load(f"{self.models}/ridge_40.pkl")
-        ridge_80 = joblib.load(f"{self.models}/ridge_80.pkl")
-        knn_20 = joblib.load(f"{self.models}/knn_20.pkl")
-        knn_90 = joblib.load(f"{self.models}/knn_90.pkl")
-
-        # predict ch2_20 features
-        transformed_x, old_svc = self.scale_transform(f"{self.filtered_out}/svc_features.csv", "ch2_20")
-
-        pred_svc_20 = svc_20.predict(transformed_x)
-        pred_svc_80 = svc_80.predict(transformed_x)
-        pred_ridge_20 = ridge_20.predict(transformed_x)
-        pred_ridge_40 = ridge_40.predict(transformed_x)
-        pred_ridge_80 = ridge_80.predict(transformed_x)
-
-        svc[20] = pred_svc_20
-        svc[80] = pred_svc_80
-        ridge[20] = pred_ridge_20
-        ridge[40] = pred_ridge_40
-        ridge[80] = pred_ridge_80
-
         # predict random_30 features
         transformed_x_knn, old_knn = self.scale_transform(f"{self.filtered_out}/knn_features.csv", "random_30")
-
-        pred_knn_20 = knn_20.predict(transformed_x_knn)
-        pred_knn_90 = knn_90.predict(transformed_x_knn)
-
-        knn[20] = pred_knn_20
-        knn[90] = pred_knn_90
+        # predict ch2_20 features
+        transformed_x, old_svc = self.scale_transform(f"{self.filtered_out}/svc_features.csv", "ch2_20")
+        # load the saved models
+        models = os.listdir(self.models)
+        for mod in models:
+            if "svc" in mod:
+                mud = joblib.load(f"{self.models}/{mod}")
+                pred = mud.predict(transformed_x)
+                svc[mod.strip(".pkl")] = pred
+            elif "ridge" in mod:
+                mud = joblib.load(f"{self.models}/{mod}")
+                pred = mud.predict(transformed_x)
+                ridge[mod.strip(".pkl")] = pred
+            elif "knn" in mod:
+                mud = joblib.load(f"{self.models}/{mod}")
+                pred = mud.predict(transformed_x_knn)
+                knn[mod.replace(".pkl", "")] = pred
 
         return svc, ridge, knn, transformed_x, old_svc, transformed_x_knn, old_knn
 
@@ -240,22 +226,17 @@ class ApplicabilityDomain():
         object: pd.Dataframe
             The predictions of each of the models kept in the dataframe
         """
-        results = {"s20": None, "s80": None, "r20": None, "r40": None, "r80": None,
-                   "k20": None, "k90": None}
-        svc_20 = [d[0] for x, d in enumerate(zip(svc[20], self.n_insiders)) if d[1] >= min_num and x not in idx]
-        svc_80 = [d[0] for x, d in enumerate(zip(svc[80], self.n_insiders)) if d[1] >= min_num and x not in idx]
-        ridge_20 = [d[0] for x, d in enumerate(zip(ridge[20], self.n_insiders)) if d[1] >= min_num and x not in idx]
-        ridge_40 = [d[0] for x, d in enumerate(zip(ridge[40], self.n_insiders)) if d[1] >= min_num and x not in idx]
-        ridge_80 = [d[0] for x, d in enumerate(zip(ridge[80], self.n_insiders)) if d[1] >= min_num and x not in idx]
-        knn_20 = [d[0] for x, d in enumerate(zip(knn[20], self.n_insiders)) if d[1] >= min_num and x not in idx]
-        knn_90 = [d[0] for x, d in enumerate(zip(knn[90], self.n_insiders)) if d[1] >= min_num and x not in idx]
-        results["s20"] = svc_20
-        results["s80"] = svc_80
-        results["r20"] = ridge_20
-        results["r40"] = ridge_40
-        results["r80"] = ridge_80
-        results["k20"] = knn_20
-        results["k90"] = knn_90
+        results = {}
+        for s, pred in svc.items():
+            sv = [d[0] for x, d in enumerate(zip(pred, self.n_insiders)) if d[1] >= min_num and x not in idx]
+            results[s] = sv
+        for s, pred in ridge.items():
+            sv = [d[0] for x, d in enumerate(zip(pred, self.n_insiders)) if d[1] >= min_num and x not in idx]
+            results[s] = sv
+        for s, pred in knn.items():
+            sv = [d[0] for x, d in enumerate(zip(pred, self.n_insiders)) if d[1] >= min_num and x not in idx]
+            results[s] = sv
+
         return pd.DataFrame(results, index=filtered_names)
 
     def filter(self, prediction, index, svc, knn, ridge, min_num=1, path_name="filtered_predictions.parquet",
