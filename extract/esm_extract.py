@@ -45,7 +45,9 @@ def read_esterase_features(labels_path, feature_path="pt_features", num_layers=3
     Xs = torch.stack(Xs, dim=0).numpy()
     Xs = pd.DataFrame(Xs, index=names)
     Xs = pd.concat([Xs, label[label_type]], axis=1)
-    return Xs
+    Y = Xs[label_type].copy()
+    X = Xs.drop(label_type, axis=1)
+    return X, Y
 
 
 def read_features(feature_path="pt_features", num_layers=33, feature="mean_representations"):
