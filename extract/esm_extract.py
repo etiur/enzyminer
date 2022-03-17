@@ -103,8 +103,10 @@ class CreateFeatures:
     def __init__(self, msa_input="msa", fasta_file=None, esm_output="pt_features", msa_output="msa_features",
                  toks_per_batch=4096, num_layers=(-1,), include="mean", truncate=True, nogpu=False):
         """
+        :param msa_input: The path to the .a3m files
         :param fasta_file: The path to the fasta file
-        :param output_dir: The output directory path
+        :param esm_output: The output directory path
+        :param msa_output: The folder to save the msa features
         :param toks_per_batch: the maximum batch size
         :param num_layers: which layers to extract the representations from
         :param include: What features to include choices are ["mean", "per_tok", "bos", "contacts"]
@@ -125,16 +127,20 @@ class CreateFeatures:
         self.esm_output.mkdir(parents=True, exist_ok=True)
         self.msa_output.mkdir(parents=True, exist_ok=True)
 
-    def extract_msa(self):
+    def _batch(self, iterable, n=1):
+        l = len(iterable[0])
+        for ndx in range(0, l, n):
+            yield iterable[0][ndx:ndx + n], iterable[1][ndx:ndx + n], iterable[2][ndx:ndx + n]
+
+    def extract_msa(self, nseq=64):
         self.model, self.alphabet = esm.pretrained.esm_msa1b_t12_100M_UR50S()
-        if torch.cuda.is_available() and not self.nogpu:
-            self.model = self.model.cuda()
-            print("Transferred model to GPU")
+        self.model.eval()
         msa_batch_converter = self.alphabet.get_batch_converter()
-        msa_data = Utilities.read_msa_from_folder(self.msa_input, 64)
+        msa_data = Utilities.read_msa_from_folder(self.msa_input, nseq)
         msa_batch = msa_batch_converter(msa_data)
+        new_msa_batch = self._batch(msa_batch, self.batch_size)
         print(f"Parsed {self.msa_input} with {len(msa_data)} files")
-        self.extract(msa_batch)
+        self.extract(new_msa_batch, self.msa_output)
 
     def extract_esmb1(self):
         self.model, self.alphabet = esm.pretrained.esm1b_t33_650M_UR50S()
@@ -146,9 +152,9 @@ class CreateFeatures:
             dataset, collate_fn=self.alphabet.get_batch_converter(), batch_sampler=batches
         )
         print(f"Read {self.fasta_file} with {len(dataset)} sequences")
-        self.extract(data_loader, batches)
+        self.extract(data_loader, self.esm_output, batches)
 
-    def extract(self, data_loader, batches=None):
+    def extract(self, data_loader, output, batches=(), msa=False):
         return_contacts = "contacts" in self.include
         assert all(-(self.model.num_layers + 1) <= i <= self.model.num_layers for i in self.num_layers)
         repr_layers = [(i + self.model.num_layers + 1) % (self.model.num_layers + 1) for i in self.num_layers]
@@ -173,8 +179,12 @@ class CreateFeatures:
                 if return_contacts:
                     contacts = out["contacts"].to(device="cpu")
                 for i, label in enumerate(labels):
-                    output_file = self.esm_output/f"{label}.pt"
-                    result = {"label": label}
+                    if msa:
+                        output_file = output/f"{label[0]}.pt"
+                        result = {"label": label[0]}
+                    else:
+                        output_file = output/f"{label}.pt"
+                        result = {"label": label}
                     # Call clone on tensors to ensure tensors are not views into a larger representation
                     # See https://github.com/pytorch/pytorch/issues/1995
                     if "per_tok" in self.include:
