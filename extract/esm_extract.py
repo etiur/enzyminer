@@ -1,3 +1,7 @@
+"""
+The scripts extract features from MSA (multiple sequences alignments) or fasta sequences using pretrained models
+"""
+
 import esm
 import torch
 import argparse
@@ -8,6 +12,7 @@ import string
 from esm import Alphabet, FastaBatchedDataset, ProteinBertModel, pretrained
 import pandas as pd
 from pathlib import Path
+from transform_msa import FeatureTransformer
 
 
 def arg_parse():
@@ -19,17 +24,20 @@ def arg_parse():
     parser.add_argument("-b", "--toks_per_batch", type=int, default=4096, help="maximum batch size")
     parser.add_argument("-rl", "--repr_layers", type=int, default=[-1], nargs="+",
                         help="layers indices from which to extract representations (0 to num_layers, inclusive)")
-    parser.add_argument("-in", "--include", type=str, nargs="+", choices=["mean", "per_tok", "contacts"],
+    parser.add_argument("-in", "--include", type=str, nargs="+", choices=("mean", "per_tok", "contacts"),
                         help="specify which representations to return", required=True)
     parser.add_argument("-t", "--truncate", action="store_false",
                         help="Truncate sequences longer than 1024 to match the training setup")
     parser.add_argument("-no", "--nogpu", action="store_true", help="Do not use GPU even if available")
     parser.add_argument("-m", "--msa", action="store_true", help="Use msa extraction")
-
+    parser.add_argument("-nseq", "--num_sequences", type=int, required=False, default=64,
+                        help="Number of sequences from the multiple sequence alignemnt ot use")
+    parser.add_argument("-t", "--feature_type", choices=("aac", "df", "smooth"), nargs="+",
+                        help="Type of feature transformation")
     args = parser.parse_args()
 
     return [args.input_location, args.output_dir, args.toks_per_batch, args.repr_layers, args.include, args.truncate,
-            args.nogpu, args.msa]
+            args.nogpu, args.msa, args.num_sequences]
 
 
 class Utilities:
@@ -127,7 +135,7 @@ class CreateFeatures:
         self.esm_output.mkdir(parents=True, exist_ok=True)
         self.msa_output.mkdir(parents=True, exist_ok=True)
 
-    def _batch(self, iterable, n=1):
+    def _batch(self, iterable, n=5):
         l = len(iterable[0])
         for ndx in range(0, l, n):
             yield iterable[0][ndx:ndx + n], iterable[1][ndx:ndx + n], iterable[2][ndx:ndx + n]
@@ -140,7 +148,7 @@ class CreateFeatures:
         msa_batch = msa_batch_converter(msa_data)
         new_msa_batch = self._batch(msa_batch, self.batch_size)
         print(f"Parsed {self.msa_input} with {len(msa_data)} files")
-        self.extract(new_msa_batch, self.msa_output)
+        self.extract(new_msa_batch, self.msa_output, new_msa_batch, msa=True, nseq=nseq)
 
     def extract_esmb1(self):
         self.model, self.alphabet = esm.pretrained.esm1b_t33_650M_UR50S()
@@ -154,7 +162,7 @@ class CreateFeatures:
         print(f"Read {self.fasta_file} with {len(dataset)} sequences")
         self.extract(data_loader, self.esm_output, batches)
 
-    def extract(self, data_loader, output, batches=(), msa=False):
+    def extract(self, data_loader, output, batches=(), msa=False, nseq=64):
         return_contacts = "contacts" in self.include
         assert all(-(self.model.num_layers + 1) <= i <= self.model.num_layers for i in self.num_layers)
         repr_layers = [(i + self.model.num_layers + 1) % (self.model.num_layers + 1) for i in self.num_layers]
@@ -197,11 +205,21 @@ class CreateFeatures:
                         # it omits the fist list and then only takes until the length of sequence, because it generates
                         # 1280 representations which is the total representation of the training set however generally
                         # it is shorter
-                    if "mean" in self.include:
+                    elif "per_tok" in self.include and msa:
+                        result["representations"] = {
+                            layer: t[i, 1: nseq +1, :len(strs[i][0])].clone()
+                            for layer, t in representations.items()
+                        }
+                    if "mean" in self.include and not msa:
                         # In mean representations it generates tensors of length 1280, so it is an average of the
                         # aminoacids
                         result["mean_representations"] = {
                             layer: t[i, 1: len(strs[i]) + 1].mean(0).clone()
+                            for layer, t in representations.items()
+                        }
+                    elif "mean" in self.include and msa:
+                        result["mean_representations"] = {
+                            layer: t[i, 1: nseq + 1, :len(strs[i][0])].mean(1).clone()
                             for layer, t in representations.items()
                         }
                     if return_contacts:
@@ -210,28 +228,75 @@ class CreateFeatures:
                     torch.save(result, output_file)
 
 
-def extract_pretrained_features(input_location, output_dir, toks_per_batch, repr_layers, include, truncate, nogpu, msa):
+def extract_pretrained_features(input_location, output_dir, toks_per_batch, repr_layers, include, truncate, nogpu, msa,
+                                nseq=64):
     """
-    Extract features from pretrained models
+    Extract representations from pretrained models
 
-    :param input_location: Fasta file or msa folder from which to extract features
-    :param output_dir: The output directory
-    :param toks_per_batch: the maximum batch size
-    :param repr_layers: which layers to extract the representations from
-    :param include: What features to include choices are ["mean", "per_tok", "contacts"]
-    :param truncate: Whether to truncate sequences greater than 1024
-    :param nogpu: Not using GPU even available
-    :param msa: Use the msa model or esm1b
+    Parameters
+    ___________
+    input_location: str
+        Fasta file or msa folder from which to extract features
+    output_dir: str
+        The output directory
+    toks_per_batch: int
+        the maximum batch size
+    repr_layers: list[int]
+        which layers to extract the representations from
+    include: list[str]
+        What representations to include choices are ["mean", "per_tok", "contacts"]
+    truncate: bool
+        Whether to truncate sequences greater than 1024
+    nogpu: bool
+        Not using GPU even available
+    msa: bool
+        Use the msa model or esm1b
+    nseq: int
+        How many sequences of the multiple sequence alignment to use
 
     """
     features = CreateFeatures(input_location, output_dir, toks_per_batch, repr_layers, include, truncate, nogpu)
     if msa:
-        features.extract_msa()
+        features.extract_msa(nseq)
     else:
         features.extract_esmb1()
 
 
+def extract_and_trasnform(input_location, output_dir, toks_per_batch, repr_layers, include, truncate, nogpu, msa,
+                          nseq):
+    """
+        Extract representations from pretrained models and transform them into features
+
+        Parameters
+        ___________
+        input_location: str
+            Fasta file or msa folder from which to extract features
+        output_dir: str
+            The output directory
+        toks_per_batch: int
+            the maximum batch size
+        repr_layers: list[int]
+            which layers to extract the representations from
+        include: list[str]
+            What representations to include choices are ["mean", "per_tok", "contacts"]
+        truncate: bool
+            Whether to truncate sequences greater than 1024
+        nogpu: bool
+            Not using GPU even available
+        msa: bool
+            Use the msa model or esm1b
+        nseq: int
+            How many sequences of the multiple sequence alignment to use
+
+        """
+    extract_pretrained_features(input_location, output_dir, toks_per_batch, repr_layers, include, truncate, nogpu, msa,
+                                nseq)
+
+
+
+
 def main():
-    input_location, output_dir, toks_per_batch, repr_layers, include, truncate, nogpu, msa = arg_parse()
-    extract_pretrained_features(input_location, output_dir, toks_per_batch, repr_layers, include, truncate, nogpu, msa)
+    input_location, output_dir, toks_per_batch, repr_layers, include, truncate, nogpu, msa, nseq = arg_parse()
+    extract_pretrained_features(input_location, output_dir, toks_per_batch, repr_layers, include, truncate, nogpu, msa,
+                                nseq)
     
