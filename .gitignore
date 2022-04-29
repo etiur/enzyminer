@@ -1,7 +1,7 @@
 data/msa/*.a3m
 data/esterase_pt/*.pt
 data/.a3m
-data/sequences/.*fasta
+data/sequences/*.fasta
 development/Sergi_code/*
 development/version1/*
 development/version2/*
