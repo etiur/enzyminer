@@ -162,7 +162,7 @@ class ApplicabilityDomain():
         distances_sorted = [np.sort(d[0]) for d in distances]
         d_no_ii = [d[1:] for d in distances_sorted]  # not including the distance with itself, which is 0
         k = int(round(pow(len(self.x_train), 1 / 3)))
-        d_means = [np.mean(d[:k]) for d in d_no_ii]  # medium values, np.mean(d[:k][0])
+        d_means = [np.mean(d[:k]) for d in d_no_ii]  # mean values, np.mean(d[:k][0])
         Q1 = np.quantile(d_means, .25)
         Q3 = np.quantile(d_means, .75)
         d_ref = Q3 + 1.5 * (Q3 - Q1)  # setting the reference value
