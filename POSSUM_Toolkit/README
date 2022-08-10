@@ -27,8 +27,11 @@ Quick start:
 #-----------------------------------------------------------------------------#
 
 1. make sure you have installed the following language environments and dependencies.
-- Perl- Perl packages  - Getopt::Long  - File::Path  - File::Basename
-- Python 2.7- Python 2.7 packages  - scipy  - numpy  - pandas
+- Perl
+- Perl packages
+  - Getopt::Long
+  - File::Path
+  - File::Basename
 
 #------------------------------------------------------------------------------
 #
@@ -40,14 +43,23 @@ Quick start:
 2. cd POSSUM_Standalone_Tookkip
 3. run possum_standalone.pl
 - For Unix/Linux/Mac OS X users, try any of the following examples:
-perl possum_standalone.pl -i input/example.fasta -o output/example_aac_pssm.csv -t aac_pssm -p input/pssm_files -h Tperl possum_standalone.pl -i input/example.fasta -o output/example_smoothed_pssm.csv -t smoothed_pssm -p input/pssm_files -h T -a 7 -b 50perl possum_standalone.pl -i input/example.fasta -o output/example_k_separated_bigrams_pssm.csv -t k_separated_bigrams_pssm -p input/pssm_files -h T -a 1perl possum_standalone.pl -i input/example.fasta -o output/example_pse_pssm.csv -t pse_pssm -p input/pssm_files -h T -a 1perl possum_standalone.pl -i input/example.fasta -o output/example_dp_pssm.csv -t dp_pssm -p input/pssm_files -h T -a 5perl possum_standalone.pl -i input/example.fasta -o output/example_pssm_ac.csv -t pssm_ac -p input/pssm_files -h T -a 10perl possum_standalone.pl -i input/example.fasta -o output/example_pssm_cc.csv -t pssm_cc -p input/pssm_files -h T -a 10
+perl possum_standalone.pl -i input/example.fasta -o output/example_aac_pssm.csv -t aac_pssm -p input/pssm_files -h T
+perl possum_standalone.pl -i input/example.fasta -o output/example_smoothed_pssm.csv -t smoothed_pssm -p input/pssm_files -h T -a 7 -b 50
+perl possum_standalone.pl -i input/example.fasta -o output/example_k_separated_bigrams_pssm.csv -t k_separated_bigrams_pssm -p input/pssm_files -h T -a 1
+perl possum_standalone.pl -i input/example.fasta -o output/example_pse_pssm.csv -t pse_pssm -p input/pssm_files -h T -a 1
+perl possum_standalone.pl -i input/example.fasta -o output/example_dp_pssm.csv -t dp_pssm -p input/pssm_files -h T -a 5
+perl possum_standalone.pl -i input/example.fasta -o output/example_pssm_ac.csv -t pssm_ac -p input/pssm_files -h T -a 10
+perl possum_standalone.pl -i input/example.fasta -o output/example_pssm_cc.csv -t pssm_cc -p input/pssm_files -h T -a 10
 
 - For Windows users, try any of the following examples:
-perl possum_standalone.pl -i input/example.fasta -o output/example_aac_pssm.csv -t aac_pssm -p input/pssm_files -h Tperl possum_standalone.pl -i input/example.fasta -o output/example_smoothed_pssm.csv -t smoothed_pssm -p input/pssm_files -h T -a 7 -b 50
+perl possum_standalone.pl -i input/example.fasta -o output/example_aac_pssm.csv -t aac_pssm -p input/pssm_files -h T
+perl possum_standalone.pl -i input/example.fasta -o output/example_smoothed_pssm.csv -t smoothed_pssm -p input/pssm_files -h T -a 7 -b 50
 
-perl possum_standalone.pl -i input\example.fasta -o output\example_aac_pssm.csv -t aac_pssm -p input\pssm_files -h Tperl possum_standalone.pl -i input\example.fasta -o output\example_smoothed_pssm.csv -t smoothed_pssm -p input\pssm_files -h T -a 7 -b 50
+perl possum_standalone.pl -i input\example.fasta -o output\example_aac_pssm.csv -t aac_pssm -p input\pssm_files -h T
+perl possum_standalone.pl -i input\example.fasta -o output\example_smoothed_pssm.csv -t smoothed_pssm -p input\pssm_files -h T -a 7 -b 50
 
-perl possum_standalone.pl -i input\\example.fasta -o output\\example_aac_pssm.csv -t aac_pssm -p input\\pssm_files -h Tperl possum_standalone.pl -i input\\example.fasta -o output\\example_smoothed_pssm.csv -t smoothed_pssm -p input\\pssm_files -h T -a 7 -b 50
+perl possum_standalone.pl -i input\\example.fasta -o output\\example_aac_pssm.csv -t aac_pssm -p input\\pssm_files -h T
+perl possum_standalone.pl -i input\\example.fasta -o output\\example_smoothed_pssm.csv -t smoothed_pssm -p input\\pssm_files -h T -a 7 -b 50
 
 NOTE: The main usage difference between Windows and other OS is the file path format. POSSUM allows /,\,\\ as path separators on windows in accordance with users’ habits.
 
