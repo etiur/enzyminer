@@ -8,3 +8,4 @@ development/version2/*
 development/outlier.py
 utilities/*
 *.pt
+.idea/*
