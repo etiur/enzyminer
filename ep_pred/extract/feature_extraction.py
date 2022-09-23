@@ -106,8 +106,8 @@ class ExtractFeatures:
         """
         with open(f"{self.base}/no_short.fasta") as inp:
             record = list(SeqIO.parse(inp, "fasta"))
-            if len(record) > 10_000:
-                for i, batch in enumerate(self._batch_iterable(record, 10_000)):
+            if len(record) > 5_000:
+                for i, batch in enumerate(self._batch_iterable(record, 5_000)):
                     filename = f"group_{i+1}.fasta"
                     with open(f"{self.base}/{filename}", "w") as split:
                         print(f"{self.base}/{filename}")

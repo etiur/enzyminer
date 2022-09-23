@@ -34,10 +34,12 @@ def arg_parse():
                         default="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/")
     parser.add_argument("-rm", "--remove", required=False, help="To remove the fasta sequences without pssm files",
                         action="store_true")
+    parser.add_argument("-iter, --iterations", required=False, default=3, type=int, help="The number of iterations "
+                                                                                         "in PSIBlast")
     args = parser.parse_args()
 
     return [args.fasta_dir, args.pssm_dir, args.dbinp, args.dbout, args.num_thread, args.number,
-            args.parallel, args.fasta_file, args.possum_dir, args.remove]
+            args.parallel, args.fasta_file, args.possum_dir, args.remove, args.iterations]
 
 
 class ExtractPssm:
@@ -46,7 +48,7 @@ class ExtractPssm:
     """
     def __init__(self, num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbinp=None,
                  dbout="/gpfs/projects/bsc72/ruite/enzyminer/database/uniref50", fasta=None,
-                 possum_dir="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/"):
+                 possum_dir="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/", iterations=3):
         """
         Initialize the ExtractPssm class
 
@@ -77,6 +79,7 @@ class ExtractPssm:
             self.base = dirname(fasta)
         else:
             self.base = "."
+        self.iter = iterations
 
     def makedata(self):
         """
@@ -150,7 +153,7 @@ class ExtractPssm:
         name = basename(file).replace(".fsa", "")
         if not path.exists(f"{abspath(self.pssm)}/{name}.pssm"):
             psi = psiblast(db=self.dbout, evalue=0.001,
-                           num_iterations=3,
+                           num_iterations=self.iter,
                            out_ascii_pssm=f"{abspath(self.pssm)}/{name}.pssm",
                            save_pssm_after_last_round=True,
                            query=file,
@@ -216,7 +219,7 @@ class ExtractPssm:
 
 def generate_pssm(num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbinp=None,
                   dbout="/gpfs/projects/bsc72/ruite/enzyminer/database/uniref50", num="*", parallel=False, fasta=None,
-                  possum_dir="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/", remove=False):
+                  possum_dir="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/", remove=False, iterations=3):
     """
     A function that creates protein databases, generates the pssms and returns the list of files
 
@@ -237,7 +240,7 @@ def generate_pssm(num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbi
     parallel: bool, optional
         True if use parallel to run the generate_pssm
     """
-    pssm = ExtractPssm(num_threads, fasta_dir, pssm_dir, dbinp, dbout, fasta, possum_dir)
+    pssm = ExtractPssm(num_threads, fasta_dir, pssm_dir, dbinp, dbout, fasta, possum_dir, iterations)
     if remove:
         pssm.remove_sequences_from_input()
     else:
@@ -253,8 +256,8 @@ def generate_pssm(num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbi
 
 
 def main():
-    fasta_dir, pssm_dir, dbinp, dbout, num_thread, num, parallel, fasta_file, possum_dir, remove = arg_parse()
-    generate_pssm(num_thread, fasta_dir, pssm_dir, dbinp, dbout, num, parallel, fasta_file, possum_dir, remove)
+    fasta_dir, pssm_dir, dbinp, dbout, num_thread, num, parallel, fasta_file, possum_dir, remove, iterations = arg_parse()
+    generate_pssm(num_thread, fasta_dir, pssm_dir, dbinp, dbout, num, parallel, fasta_file, possum_dir, remove, iterations)
 
 
 if __name__ == "__main__":

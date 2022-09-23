@@ -53,18 +53,21 @@ def arg_parse():
                         action="store_true")
     parser.add_argument("-v", "--value", required=False, default=0.8, type=float,
                         help="The voting threshold to be considered positive")
+    parser.add_argument("-iter, --iterations", required=False, default=3, type=int, help="The number of iterations "
+                                                                                         "in PSIBlast")
     args = parser.parse_args()
 
     return [args.fasta_file, args.pssm_dir, args.fasta_dir, args.ifeature_dir, args.possum_dir, args.ifeature_out,
             args.possum_out, args.filtered_out, args.dbinp, args.dbout, args.num_thread, args.number_similar_samples,
             args.res_dir, args.restart, args.filter_only, args.extraction_restart, args.long, args.run, args.start,
-            args.end, args.sbatch_path, args.parallel, args.strict, args.remove, args.value]
+            args.end, args.sbatch_path, args.parallel, args.strict, args.remove, args.value, args.iterations]
 
 
 class WriteSh:
     def __init__(self, fasta=None, fasta_dir="fasta_files", pssm_dir="pssm", num_threads=100, dbinp=None,
                  dbout="/gpfs/projects/bsc72/ruite/enzyminer/database/uniref50", run_path="run_files",
-                 possum_dir="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/", parallel=False, remove=False):
+                 possum_dir="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/", parallel=False, remove=False,
+                 iterations=3):
         """
         Initialize the ExtractPssm class
 
@@ -93,6 +96,7 @@ class WriteSh:
         self.run_path = run_path
         self.parallel = parallel
         self.remove = remove
+        self.iter = iterations
 
     def write(self, num):
         if type(num) == str:
@@ -111,6 +115,8 @@ class WriteSh:
             argument_list.append(arguments)
             if self.remove:
                 argument_list.append("-rm ")
+            if self.iter != 3:
+                argument_list.append(f"-iter {self.iter} ")
             if self.fasta_file:
                 argument_list.append(f"-i {self.fasta_file} ")
             if type(num) == int:
@@ -153,10 +159,10 @@ class WriteSh:
 def main():
     fasta_file, pssm_dir, fasta_dir, ifeature_dir, possum_dir, ifeature_out, possum_out, filtered_out, dbinp, \
     dbout, num_thread, min_num, res_dir, restart, filter_only, extraction_restart, long, \
-    run, start, end, sbatch_path, parallel, strict, remove, value = arg_parse()
+    run, start, end, sbatch_path, parallel, strict, remove, value, iterations = arg_parse()
     if not restart:
         sh = WriteSh(fasta_file, fasta_dir, pssm_dir, num_thread, dbinp, dbout, sbatch_path, possum_dir, parallel,
-                     remove)
+                     remove, iterations)
         sh.write_all(start, end)
     elif restart == "pssm":
         files = glob.glob(f"{sbatch_path}/pssm_*.sh")
