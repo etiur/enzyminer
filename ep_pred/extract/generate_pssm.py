@@ -6,7 +6,6 @@ import glob
 from os import path
 from os.path import basename, dirname, abspath
 import time
-import logging
 from multiprocessing.dummy import Pool
 from subprocess import call
 import shlex
@@ -34,7 +33,7 @@ def arg_parse():
                         default="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/")
     parser.add_argument("-rm", "--remove", required=False, help="To remove the fasta sequences without pssm files",
                         action="store_true")
-    parser.add_argument("-iter, --iterations", required=False, default=3, type=int, help="The number of iterations "
+    parser.add_argument("-iter", "--iterations", required=False, default=3, type=int, help="The number of iterations "
                                                                                          "in PSIBlast")
     args = parser.parse_args()
 
@@ -80,6 +79,7 @@ class ExtractPssm:
         else:
             self.base = "."
         self.iter = iterations
+        self.log = log
 
     def makedata(self):
         """
@@ -158,24 +158,27 @@ class ExtractPssm:
                            save_pssm_after_last_round=True,
                            query=file,
                            num_threads=self.num_thread)
-            start = time.time()
             stdout_psi, stderr_psi = psi()
-            end = time.time()
-            print(f"it took {end - start} to finish {name}.pssm")
             return stdout_psi, stderr_psi
 
     def run_generate(self, num):
         """
         run the generate function
         """
+        all_time = []
         if not path.exists(f"{abspath(self.pssm)}"):
             os.makedirs(f"{abspath(self.pssm)}")
         self.fast_check(num)
         file = glob.glob(f"{abspath(self.fasta_dir)}/seq_{num}*.fsa")
         file.sort(key=lambda x: int(basename(x).replace(".fsa", "").split("_")[1]))
         for files in file:
+            start = time.time()
             self.generate(files)
+            end = time.time()
+            all_time.append(end-start)
+            print(f"it took {end - start} to finish {name}.pssm")
             self._check_output(files)
+        self.log.info(f"It took {sum(all_time)} to generate {len(file)} pssm files")
 
     def parallel(self, num):
         """
@@ -191,7 +194,7 @@ class ExtractPssm:
         with Pool(processes=self.num_thread) as executor:
             executor.map(self.generate, file)
         end = time.time()
-        logging.info(f"it took {end-start} to finish all the files")
+        self.log.info(f"it took {end-start} to finish all the files")
 
     def remove_sequences_from_input(self):
         """

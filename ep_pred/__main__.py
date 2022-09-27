@@ -53,7 +53,7 @@ def arg_parse():
                         action="store_true")
     parser.add_argument("-v", "--value", required=False, default=0.8, type=float,
                         help="The voting threshold to be considered positive")
-    parser.add_argument("-iter, --iterations", required=False, default=3, type=int, help="The number of iterations "
+    parser.add_argument("-iter", "--iterations", required=False, default=3, type=int, help="The number of iterations "
                                                                                          "in PSIBlast")
     args = parser.parse_args()
 
