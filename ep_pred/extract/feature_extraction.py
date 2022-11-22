@@ -343,7 +343,7 @@ class ReadFeatures:
         self.ifeature_out = ifeature_out
         self.possum_out = possum_out
         self.features = None
-        self.learning = "/gpfs/projects/bsc72/ruite/enzyminer/data/esterase_binary.xlsx"
+        self.learning = "/gpfs/projects/bsc72/ruite/enzyminer/data/all_feature.xlsx"
         self.filtered_out = filtered_out
         if len(fasta_file.split("/")) > 1:
             self.base = os.path.dirname(fasta_file)
@@ -357,29 +357,30 @@ class ReadFeatures:
             name of the file
         """
         # ifeature features
-        amphy = [pd.read_csv(f"{self.ifeature_out}/APAAC_{i+1}.tsv", sep="\t", index_col=0) for i in range(length)]
         comp_space_aa_group_pairs = [pd.read_csv(f"{self.ifeature_out}/CKSAAGP_{i+1}.tsv", sep="\t", index_col=0) for i in range(length)]
         distribution = [pd.read_csv(f"{self.ifeature_out}/CTDD_{i+1}.tsv", sep="\t", index_col=0) for i in range(length)]
         geary = [pd.read_csv(f"{self.ifeature_out}/Geary_{i+1}.tsv", sep="\t", index_col=0) for i in range(length)]
         moran = [pd.read_csv(f"{self.ifeature_out}/Moran_{i+1}.tsv", sep="\t", index_col=0) for i in range(length)]
+        broto = [pd.read_csv(f"{self.ifeature_out}/NMBroto_{i + 1}.tsv", sep="\t", index_col=0) for i in range(length)]
         # concat features if length > 1 else return the dataframe
         if length > 1:
             moran = pd.concat(moran)
             geary = pd.concat(geary)
-            amphy = pd.concat(amphy)
+            broto = pd.concat(broto)
             distribution = pd.concat(distribution)
             comp_space_aa_group_pairs = pd.concat(comp_space_aa_group_pairs)
         else:
             moran = moran[0]
             geary = geary[0]
-            amphy = amphy[0]
+            broto = broto[0]
             distribution = distribution[0]
             comp_space_aa_group_pairs = comp_space_aa_group_pairs[0]
         # change the column names
         geary.columns = [f"{x}_geary" for x in geary.columns]
         moran.columns = [f"{x}_moran" for x in moran.columns]
+        broto.columns = [f"{x}_broto" for x in broto.columns]
         # concat the features
-        all_data = pd.concat([amphy, geary, moran, comp_space_aa_group_pairs, distribution], axis=1)
+        all_data = pd.concat([broto, geary, moran, comp_space_aa_group_pairs, distribution], axis=1)
         return all_data
 
     def read_possum(self, ID, length):
@@ -397,7 +398,6 @@ class ReadFeatures:
         pssm_composition = [pd.read_csv(f"{self.possum_out}/pssm_composition_{i+1}.csv") for i in range(length)]
         tpc = [pd.read_csv(f"{self.possum_out}/tpc_{i+1}.csv") for i in range(length)]
         tri_gram_pssm = [pd.read_csv(f"{self.possum_out}/tri_gram_pssm_{i+1}.csv") for i in range(length)]
-        bigrams_pssm = [pd.read_csv(f"{self.possum_out}/k_separated_bigrams_pssm_{i+1}.csv") for i in range(length)]
         pse_pssm_3 = [pd.read_csv(f"{self.possum_out}/pse_pssm_3_{i+1}.csv") for i in range(length)]
         # concat if length > 1 else return the dataframe
         if length > 1:
@@ -406,7 +406,6 @@ class ReadFeatures:
             pssm_composition = pd.concat(pssm_composition)
             tpc = pd.concat(tpc)
             tri_gram_pssm = pd.concat(tri_gram_pssm)
-            bigrams_pssm = pd.concat(bigrams_pssm)
             pse_pssm_3 = pd.concat(pse_pssm_3)
         else:
             dp_pssm = dp_pssm[0]
@@ -414,7 +413,6 @@ class ReadFeatures:
             pssm_composition = pssm_composition[0]
             tpc = tpc[0]
             tri_gram_pssm = tri_gram_pssm[0]
-            bigrams_pssm = bigrams_pssm[0]
             pse_pssm_3 = pse_pssm_3[0]
 
         # change the index and columns
@@ -424,13 +422,12 @@ class ReadFeatures:
         pssm_composition.index = ID
         tpc.index = ID
         tri_gram_pssm.index = ID
-        bigrams_pssm.index = ID
         index = pse_pssm_3.columns
         index_3 = [f"{x}_3" for x in index]
         pse_pssm_3.index = ID
         pse_pssm_3.columns = index_3
         # Possum features
-        feature = [dp_pssm, bigrams_pssm, pssm_cc, pssm_composition, tpc, tri_gram_pssm, pse_pssm_3]
+        feature = [dp_pssm, pssm_cc, pssm_composition, tpc, tri_gram_pssm, pse_pssm_3]
         everything = pd.concat(feature, axis=1)
 
         return everything
@@ -450,25 +447,23 @@ class ReadFeatures:
         """
         filter the obtained features
         """
-        self.read()
-        svc = pd.read_excel(f"{self.learning}", index_col=0, sheet_name="ch2_20")
-        knn = pd.read_excel(f"{self.learning}", index_col=0, sheet_name="random_30")
-        if svc.isnull().values.any():
-            svc.dropna(axis=1, inplace=True)
-            svc.drop(["go"], axis=1, inplace=True)
-        if knn.isnull().values.any():
-            knn.dropna(axis=1, inplace=True)
-            knn.drop(["go"], axis=1, inplace=True)
-
         if not os.path.exists(self.filtered_out):
             os.makedirs(self.filtered_out)
+        self.read()
+        svc = pd.read_excel(f"{self.learning}", index_col=0, sheet_name="ch2_30")
+        knn = pd.read_excel(f"{self.learning}", index_col=0, sheet_name="xgboost_30")
+        ridge = pd.read_excel(f"{self.learning}", index_col=0, sheet_name="random_20")
+
         # write the new features to csv
         svc_columns = list(svc.columns)
         knn_columns = list(knn.columns)
+        ridge_columns = list(ridge.columns)
         features_svc = self.features[svc_columns]
         features_knn = self.features[knn_columns]
+        features_ridge = self.features[ridge_columns]
         features_svc.to_csv(f"{self.filtered_out}/svc_features.csv", header=True)
         features_knn.to_csv(f"{self.filtered_out}/knn_features.csv", header=True)
+        features_ridge.to_csv(f"{self.filtered_out}/ridge_features.csv", header=True)
 
 
 def extract_and_filter(fasta_file=None, pssm_dir="pssm", fasta_dir="fasta_files", ifeature_out="ifeature_features",
