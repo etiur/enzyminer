@@ -117,6 +117,44 @@ class ExtractFeatures:
             else:
                 shutil.copyfile(f"{self.base}/no_short.fasta", f"{self.base}/group_1.fasta")
 
+    @staticmethod
+    def run_progam(commands, program_name=None):
+        """
+        Run in parallel the subprocesses from the command
+        Parameters
+        ----------
+        commands: list[str]
+            A list of commandline commands that calls to Possum programs or ifeature programs
+        program_name: str, optional
+            A name to identify the commands
+        """
+        proc = [Popen(shlex.split(command), close_fds=False) for command in commands]
+        start = time.time()
+        for p in proc:
+            p.wait()
+        end = time.time()
+        if program_name:
+            print(f"start running {program_name}")
+        print(f"It took {end - start} second to run")
+
+    def ifeature_short(self, fasta_file):
+        """
+        Extraction of features that are fast from ifeature
+
+        Parameters
+        ----------
+        fasta_file: str
+            path to the different fasta files
+        """
+        num = basename(fasta_file).replace(".fasta", "").split("_")[1]
+        if not os.path.exists(f"{self.ifeature_out}"):
+            os.makedirs(f"{self.ifeature_out}")
+        types = ["CKSAAGP", "CTDD"]
+        commands_1 = [
+            f"python3 {self.ifeature} --file {fasta_file} --type {prog} --out {self.ifeature_out}/{prog}_{num}.tsv" for
+            prog in types]
+        return commands_1
+
     def ifeature_long(self, fasta_file):
         """
         Extraction of features for time consuming ifeature features
@@ -129,20 +167,38 @@ class ExtractFeatures:
         num = basename(fasta_file).replace(".fasta", "").split("_")[1]
         if not os.path.exists(f"{self.ifeature_out}"):
             os.makedirs(f"{self.ifeature_out}")
-        ifeature_long = ["Moran", "Geary"]
+        ifeature_long = ["Moran", "Geary", "NMBroto"]
         commands_1 = [
             f"python3 {self.ifeature} --file {fasta_file} --type {prog} --out {self.ifeature_out}/{prog}_{num}.tsv" for
             prog in ifeature_long]
-        # using shlex.split to parse the strings into lists for Popen class
-        proc = [Popen(shlex.split(command), close_fds=False) for command in commands_1]
-        start = time.time()
-        for p in proc:
-            p.wait()
-        end = time.time()
+
+        return commands_1
+
+    def possum_short(self, fasta_file):
+        """
+        writing the commands to run the possum features that do not take a lot of time
+
+        Parameters
+        ----------
+        fasta_file: str
+            path to the different files
+        """
+        num = basename(fasta_file).replace(".fasta", "").split("_")[1]
+        if not os.path.exists(f"{self.possum_out}"):
+            os.makedirs(f"{self.possum_out}")
+        types_possum = ["pssm_composition", "tpc", "dp_pssm"]
+        command_1_possum = [
+            f'perl {self.possum} -i {fasta_file} -p {self.pssm_dir} -t {prog} -o {self.possum_out}/{prog}_{num}.csv' for
+            prog in types_possum]
+        command_2_possum = [
+            f'perl {self.possum} -i {fasta_file} -p {self.pssm_dir} -t pse_pssm -a 3 -o {self.possum_out}/pse_pssm_3_{num}.csv']
+        command_1_possum.extend(command_2_possum)
+
+        return command_1_possum
 
     def possum_long(self, fasta_file):
         """
-        writing the commands to run the possum features that takes a lot of time
+        Writing the commands to run the possum features that take a lot of time
 
         Parameters
         ----------
@@ -156,88 +212,44 @@ class ExtractFeatures:
         command_3_possum = [
             f'perl {self.possum} -i {fasta_file} -p {self.pssm_dir} -t {prog} -o {self.possum_out}/{prog}_{num}.csv' for
             prog in possum_long]
-        # using shlex.split to parse the strings into lists for Popen class
-        proc = [Popen(shlex.split(command), close_fds=False) for command in command_3_possum]
-        start = time.time()
-        for p in proc:
-            p.wait()
-        end = time.time()
+
+        return command_3_possum
 
     def extraction_long(self, fasta_file):
         """
-        writing the commands to run the features that takes a lot of time
+        Writing the commands to run the features that take a lot of time
 
         Parameters
         ----------
         fasta_file: str
             path to the different files
         """
-        num = basename(fasta_file).replace(".fasta", "").split("_")[1]
-        if not os.path.exists(f"{self.possum_out}"):
-            os.makedirs(f"{self.possum_out}")
-        if not os.path.exists(f"{self.ifeature_out}"):
-            os.makedirs(f"{self.ifeature_out}")
-        ifeature_long = ["Moran", "Geary"]
-        commands_1 = [
-            f"python3 {self.ifeature} --file {fasta_file} --type {prog} --out {self.ifeature_out}/{prog}_{num}.tsv" for
-            prog in ifeature_long]
-        possum_long = ["pssm_cc", "tri_gram_pssm"]
-        command_3_possum = [
-            f'perl {self.possum} -i {fasta_file} -p {self.pssm_dir} -t {prog} -o {self.possum_out}/{prog}_{num}.csv' for
-            prog in possum_long]
-        # combine the commands
+        # generate the commands
+        commands_1 = self.ifeature_long(fasta_file)
+        command_3_possum = self.possum_long(fasta_file)
         commands_1.extend(command_3_possum)
-        proc = [Popen(shlex.split(command), close_fds=False) for command in commands_1]
-        start = time.time()
-        for p in proc:
-            p.wait()
-        end = time.time()
+        self.run_progam(commands_1, "All long features")
 
     def extraction_all(self, fasta_file):
         """
-        writting the commands to run the programmes
+        Writing the commands to run the all programmes
 
         Parameters
         ----------
         fasta_file: str
             Path to the different fasta files
         """
-        num = basename(fasta_file).replace(".fasta", "").split("_")[1]
-        if not os.path.exists(f"{self.possum_out}"):
-            os.makedirs(f"{self.possum_out}")
-        if not os.path.exists(f"{self.ifeature_out}"):
-            os.makedirs(f"{self.ifeature_out}")
         # ifeature features
-        types = ["APAAC", "CKSAAGP", "CTDD"]
-        commands_1 = [
-            f"python3 {self.ifeature} --file {fasta_file} --type {prog} --out {self.ifeature_out}/{prog}_{num}.tsv" for
-            prog in types]
-        ifeature_long = ["Moran", "Geary"]
-        commands_1_long = [
-            f"python3 {self.ifeature} --file {fasta_file} --type {prog} --out {self.ifeature_out}/{prog}_{num}.tsv" for
-            prog in ifeature_long]
+        commands_1 = self.ifeature_short(fasta_file)
+        commands_1_long = self.ifeature_long(fasta_file)
         # possum features
-        types_possum = ["pssm_composition", "tpc", "k_separated_bigrams_pssm", "dp_pssm"]
-        command_1_possum = [
-            f'perl {self.possum} -i {fasta_file} -p {self.pssm_dir} -t {prog} -o {self.possum_out}/{prog}_{num}.csv' for
-            prog in types_possum]
-        command_2_possum = [
-            f'perl {self.possum} -i {fasta_file} -p {self.pssm_dir} -t pse_pssm -a 3 -o {self.possum_out}/pse_pssm_3_{num}.csv']
-        possum_long = ["pssm_cc", "tri_gram_pssm"]
-        command_3_possum = [
-            f'perl {self.possum} -i {fasta_file} -p {self.pssm_dir} -t {prog} -o {self.possum_out}/{prog}_{num}.csv' for
-            prog in possum_long]
-
+        command_1_possum = self.possum_short(fasta_file)
+        command_3_possum = self.possum_long(fasta_file)
         # combine the commands
         commands_1.extend(command_1_possum)
-        commands_1.extend(command_2_possum)
         commands_1.extend(commands_1_long)
         commands_1.extend(command_3_possum)
-        proc = [Popen(shlex.split(command), close_fds=False) for command in commands_1]
-        start = time.time()
-        for p in proc:
-            p.wait()
-        end = time.time()
+        self.run_progam(commands_1, "All features")
 
     def extraction_ifeature(self, fasta_file):
         """
@@ -248,25 +260,12 @@ class ExtractFeatures:
         fasta_file: str
             path to the different fasta_files
         """
-        num = basename(fasta_file).replace(".fasta", "").split("_")[1]
-        if not os.path.exists(f"{self.ifeature_out}"):
-            os.makedirs(f"{self.ifeature_out}")
         # ifeature features
-        types = ["APAAC", "CKSAAGP", "CTDD"]
-        commands_1 = [
-            f"python3 {self.ifeature} --file {fasta_file} --type {prog} --out {self.ifeature_out}/{prog}_{num}.tsv" for
-            prog in types]
-        ifeature_long = ["Moran", "Geary"]
-        commands_1_long = [
-            f"python3 {self.ifeature} --file {fasta_file} --type {prog} --out {self.ifeature_out}/{prog}_{num}.tsv" for
-            prog in ifeature_long]
+        commands_1 = self.ifeature_short(fasta_file)
+        commands_1_long = self.ifeature_long(fasta_file)
         # combining the commands
         commands_1.extend(commands_1_long)
-        proc = [Popen(shlex.split(command), close_fds=False) for command in commands_1]
-        start = time.time()
-        for p in proc:
-            p.wait()
-        end = time.time()
+        self.run_progam(commands_1, "All Ifeature programs")
 
     def extraction_possum(self, fasta_file):
         """
@@ -278,28 +277,12 @@ class ExtractFeatures:
             Path to the different fasta files
         """
         # possum features
-        num = basename(fasta_file).replace(".fasta", "").split("_")[1]
-        if not os.path.exists(f"{self.possum_out}"):
-            os.makedirs(f"{self.possum_out}")
-        types_possum = ["pssm_composition", "tpc", "k_separated_bigrams_pssm", "dp_pssm"]
-        command_1_possum = [
-            f'perl {self.possum} -i {fasta_file} -p {self.pssm_dir} -t {prog} -o {self.possum_out}/{prog}_{num}.csv' for
-            prog in types_possum]
-        command_2_possum = [
-            f'perl {self.possum} -i {fasta_file} -p {self.pssm_dir} -t pse_pssm -a 3 -o {self.possum_out}/pse_pssm_3_{num}.csv']
-        possum_long = ["pssm_cc", "tri_gram_pssm"]
-        command_3_possum = [
-            f'perl {self.possum} -i {fasta_file} -p {self.pssm_dir} -t {prog} -o {self.possum_out}/{prog}_{num}.csv' for
-            prog in possum_long]
+        command_1_possum = self.possum_short(fasta_file)
+        command_3_possum = self.possum_long(fasta_file)
         # combining all the commands
-        command_1_possum.extend(command_2_possum)
         command_1_possum.extend(command_3_possum)
         # using shlex.split to parse the strings into lists for Popen class
-        proc = [Popen(shlex.split(command), close_fds=False) for command in command_1_possum]
-        start = time.time()
-        for p in proc:
-            p.wait()
-        end = time.time()
+        self.run_progam(command_1_possum, "All Possum programs")
 
     def run_extraction_parallel(self, restart=None, long=None):
         """
