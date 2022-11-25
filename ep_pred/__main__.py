@@ -56,13 +56,13 @@ def arg_parse():
     return [args.fasta_file, args.pssm_dir, args.fasta_dir, args.ifeature_dir, args.possum_dir, args.ifeature_out,
             args.possum_out, args.filtered_out, args.dbinp, args.dbout, args.num_thread, args.number_similar_samples,
             args.res_dir, args.restart, args.filter_only, args.extraction_restart, args.long, args.run, args.start,
-            args.end, args.sbatch_path, args.parallel, args.remove, args.value, args.iterations]
+            args.end, args.sbatch_path, args.remove, args.value, args.iterations]
 
 
 class WriteSh:
     def __init__(self, fasta=None, fasta_dir="fasta_files", pssm_dir="pssm", num_threads=100, dbinp=None,
                  dbout="/gpfs/projects/bsc72/ruite/enzyminer/database/uniref50", run_path="run_files",
-                 possum_dir="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/", parallel=False, remove=False,
+                 possum_dir="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/", remove=False,
                  iterations=3):
         """
         Initialize the ExtractPssm class
@@ -90,7 +90,6 @@ class WriteSh:
         self.num_thread = num_threads
         self.possum = possum_dir
         self.run_path = run_path
-        self.parallel = parallel
         self.remove = remove
         self.iter = iterations
 

@@ -36,7 +36,7 @@ def arg_parse():
     args = parser.parse_args()
 
     return [args.fasta_dir, args.pssm_dir, args.dbinp, args.dbout, args.num_thread, args.number,
-            args.parallel, args.fasta_file, args.possum_dir, args.remove, args.iterations]
+            args.fasta_file, args.possum_dir, args.remove, args.iterations]
 
 
 class ExtractPssm:
