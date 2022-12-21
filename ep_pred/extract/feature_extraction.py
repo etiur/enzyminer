@@ -147,8 +147,6 @@ class ExtractFeatures:
             path to the different fasta files
         """
         num = basename(fasta_file).replace(".fasta", "").split("_")[1]
-        if not os.path.exists(f"{self.ifeature_out}"):
-            os.makedirs(f"{self.ifeature_out}")
         types = ["CKSAAGP", "CTDD"]
         commands_1 = [
             f"python3 {self.ifeature} --file {fasta_file} --type {prog} --out {self.ifeature_out}/{prog}_{num}.tsv" for
@@ -157,7 +155,7 @@ class ExtractFeatures:
 
     def ifeature_long(self, fasta_file):
         """
-        Extraction of features for time consuming ifeature features
+        Extraction of features for time-consuming ifeature features
 
         Parameters
         ----------
@@ -165,8 +163,6 @@ class ExtractFeatures:
             path to the different fasta files
         """
         num = basename(fasta_file).replace(".fasta", "").split("_")[1]
-        if not os.path.exists(f"{self.ifeature_out}"):
-            os.makedirs(f"{self.ifeature_out}")
         ifeature_long = ["Moran", "Geary", "NMBroto"]
         commands_1 = [
             f"python3 {self.ifeature} --file {fasta_file} --type {prog} --out {self.ifeature_out}/{prog}_{num}.tsv" for
@@ -184,8 +180,6 @@ class ExtractFeatures:
             path to the different files
         """
         num = basename(fasta_file).replace(".fasta", "").split("_")[1]
-        if not os.path.exists(f"{self.possum_out}"):
-            os.makedirs(f"{self.possum_out}")
         types_possum = ["pssm_composition", "tpc", "dp_pssm"]
         command_1_possum = [
             f'perl {self.possum} -i {fasta_file} -p {self.pssm_dir} -t {prog} -o {self.possum_out}/{prog}_{num}.csv' for
@@ -206,8 +200,6 @@ class ExtractFeatures:
             path to the different files
         """
         num = basename(fasta_file).replace(".fasta", "").split("_")[1]
-        if not os.path.exists(f"{self.possum_out}"):
-            os.makedirs(f"{self.possum_out}")
         possum_long = ["pssm_cc", "tri_gram_pssm"]
         command_3_possum = [
             f'perl {self.possum} -i {fasta_file} -p {self.pssm_dir} -t {prog} -o {self.possum_out}/{prog}_{num}.csv' for
@@ -295,6 +287,10 @@ class ExtractFeatures:
         long:
             If to run only the longer features
         """
+        if not os.path.exists(f"{self.possum_out}"):
+            os.makedirs(f"{self.possum_out}")
+        if not os.path.exists(f"{self.ifeature_out}"):
+            os.makedirs(f"{self.ifeature_out}")
         name = f"{self.base}/group_1.fasta"
         if not os.path.exists(name):
             self._separate_bunch()
