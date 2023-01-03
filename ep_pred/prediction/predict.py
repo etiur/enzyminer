@@ -43,7 +43,7 @@ class EnsembleVoting:
             The path to the directory where the new extracted feature files are
         """
         self.filtered_out = feature_out
-        self.learning = "/gpfs/projects/bsc72/ruite/enzyminer/data/all_feature.xlsx"
+        self.learning = "/gpfs/projects/bsc72/ruite/enzyminer/data/final_features.xlsx"
         self.models = "/gpfs/projects/bsc72/ruite/enzyminer/final_models"
 
     def scale_transform(self, file_path, feature_set):
@@ -136,7 +136,7 @@ class ApplicabilityDomain():
         self.pred = []
         self.dataframe = None
         self.n_insiders = []
-        path_to_esterase = "/gpfs/projects/bsc72/ruite/enzyminer/data/all_feature.xlsx"
+        path_to_esterase = "/gpfs/projects/bsc72/ruite/enzyminer/data/final_features.xlsx"
         x_svc = pd.read_excel(f"{path_to_esterase}", index_col=0, sheet_name=f"ch2_30", engine='openpyxl')
         self.training_names = x_svc.index
         self.ad_indices = []
@@ -233,7 +233,7 @@ class ApplicabilityDomain():
 
         return pd.DataFrame(results, index=filtered_names)
 
-    def filter(self, prediction, svc, knn, ridge, index, min_num=1, path_name="filtered_predictions.parquet"):
+    def filter(self, prediction, svc, knn, ridge, min_num=1, path_name="filtered_predictions.parquet"):
         """
         Filter those predictions that have less than min_num training samples
 
@@ -254,19 +254,17 @@ class ApplicabilityDomain():
         min_num: int, optional
             The minimun number of training samples within the AD of the test samples
         """
-        # filter the predictions and names  based on the specified number of similar training samples
+        # filter the predictions and names based on the if it passed the threshold of similar samples
         filtered_pred = [d[0] for x, d in enumerate(zip(prediction, self.n_insiders)) if d[1] >= min_num]
         filtered_names = [d[0] for y, d in enumerate(zip(self.test_names, self.n_insiders)) if d[1] >= min_num]
         filtered_n_insiders = [d for s, d in enumerate(self.n_insiders) if d >= min_num]
-        filtered_indices = [index.remove(num) for num, x in enumerate(self.n_insiders) if x < min_num and num in index]
         # Turn the different arrays into pandas Series or dataframes
         pred = pd.Series(filtered_pred, index=filtered_names)
         n_applicability = pd.Series(filtered_n_insiders, index=filtered_names)
         models = self._filter_models_vote(svc, knn, ridge, filtered_names, min_num)
-        agree = [x not in filtered_indices for x in range(len(filtered_names))]
         # concatenate all the objects
-        self.pred = pd.concat([pred, n_applicability, agree, models], axis=1)
-        self.pred.columns = ["prediction", "AD_number", "agreement"] + list(models.columns)
+        self.pred = pd.concat([pred, n_applicability, models], axis=1)
+        self.pred.columns = ["prediction", "AD_number"] + list(models.columns)
         self.pred.to_parquet(path_name)
         return self.pred
 
@@ -399,16 +397,16 @@ def vote_and_filter(feature_out, fasta_file, min_num=1, res_dir="results", val=1
     domain_svc = ApplicabilityDomain()
     domain_svc.fit(X_svc)
     domain_svc.predict(new_svc)
-    # return the prediction after the applicability domain filter of SVC
-    pred_svc = domain_svc.filter(all_voting, svc, knn, ridge, all_index, min_num, f"{res_dir}/svc_domain.parquet")
+    # return the prediction after the applicability domain filter of SVC (the filter depends on the feature space)
+    pred_svc = domain_svc.filter(all_voting, svc, knn, ridge, min_num, f"{res_dir}/svc_domain.parquet")
     domain_svc.extract(fasta_file, pred_svc, positive_fasta=f"positive_svc.fasta",
                        negative_fasta=f"negative_svc.fasta", res_dir=res_dir)
     # applicability domain for KNN
     domain_knn = ApplicabilityDomain()
     domain_knn.fit(X_knn)
     domain_knn.predict(new_knn)
-    # return the prediction after the applicability domain filter of KNN
-    pred_knn = domain_knn.filter(all_voting, svc, knn, ridge, all_index, min_num, f"{res_dir}/knn_domain.parquet")
+    # return the prediction after the applicability domain filter of KNN (so different features will produce different samples to be included)
+    pred_knn = domain_knn.filter(all_voting, svc, knn, ridge, min_num, f"{res_dir}/knn_domain.parquet")
     domain_knn.extract(fasta_file, pred_knn, positive_fasta=f"positive_knn.fasta",
                        negative_fasta=f"negative_knn.fasta", res_dir=res_dir)
 
@@ -416,8 +414,8 @@ def vote_and_filter(feature_out, fasta_file, min_num=1, res_dir="results", val=1
     domain_ridge = ApplicabilityDomain()
     domain_ridge.fit(X_knn)
     domain_ridge.predict(new_knn)
-    # return the prediction after the applicability domain filter of KNN
-    pred_ridge = domain_knn.filter(all_voting, svc, knn, ridge, all_index, min_num, f"{res_dir}/ridge_domain.parquet")
+    # return the prediction after the applicability domain filter of Ridge (We save the different versions)
+    pred_ridge = domain_knn.filter(all_voting, svc, knn, ridge, min_num, f"{res_dir}/ridge_domain.parquet")
     domain_ridge.extract(fasta_file, pred_ridge, positive_fasta=f"positive_ridge.fasta",
                        negative_fasta=f"negative_ridge.fasta", res_dir=res_dir)
     # Then filter again to see which sequences are within the AD of the 3 algorithms since it is an ensemble classifier

@@ -339,7 +339,7 @@ class ReadFeatures:
         self.ifeature_out = ifeature_out
         self.possum_out = possum_out
         self.features = None
-        self.learning = "/gpfs/projects/bsc72/ruite/enzyminer/data/all_feature.xlsx"
+        self.learning = "/gpfs/projects/bsc72/ruite/enzyminer/data/final_features.xlsx"
         self.filtered_out = filtered_out
         if len(fasta_file.split("/")) > 1:
             self.base = os.path.dirname(fasta_file)
