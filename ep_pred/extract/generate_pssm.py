@@ -174,7 +174,7 @@ class ExtractPssm:
     def remove_sequences_from_input(self):
         """
         A function that removes the fasta sequences that psiblast cannot generate pssm files from,
-        from the input fasta file.
+        from the input fasta file. If inside the remove dir there are fasta files them you have to use this function.
         """
         # I search for fasta files that doesn't have pssm files
         fasta_file = list(map(lambda x: basename(x.replace(".fsa", "")), glob.glob(f"{abspath('removed_dir')}/seq_*.fsa")))
@@ -213,10 +213,8 @@ def generate_pssm(num_threads=100, fasta_dir="fasta_files", pssm_dir="pssm", dbi
         The path to the protein database
     dbout: str, optional
         The name of the created databse database
-    mpi: bool, optional
-        If to use MPI or not
-    parallel: bool, optional
-        True if use parallel to run the generate_pssm
+    remove: bool, optional
+        To remove the sequences that could generate a PSSM file. It left it will cause errors with POSSUM
     """
     if not os.path.exists(f"{fasta_dir}"):
         os.makedirs(f"{fasta_dir}")

@@ -27,7 +27,7 @@ def arg_parse():
     parser.add_argument("-do", "--dbout", required=False, help="The path and name of the created database",
                         default="/gpfs/projects/bsc72/ruite/enzyminer/database/uniref50")
     parser.add_argument("-n", "--num_thread", required=False, default=100, type=int,
-                        help="The number of threads to use for the generation of pssm profiles")
+                        help="The number of threads to use for the generation of pssm profiles and feature extraction")
     parser.add_argument("-rs", "--res_dir", required=False,
                         default="results", help="The name for the folder where to store the prediction results")
     parser.add_argument("-nss", "--number_similar_samples", required=False, default=1, type=int,
@@ -45,8 +45,6 @@ def arg_parse():
     parser.add_argument("-en", "--end", required=False, type=int, help="The ending number, not included")
     parser.add_argument("-sp", "--sbatch_path", required=False,
                         help="The folder to keep the run files for generating pssm", default="run_files")
-    parser.add_argument("-rm", "--remove", required=False, help="To remove the fasta sequences without pssm files",
-                        action="store_true")
     parser.add_argument("-v", "--value", required=False, default=1, type=float, choices=(1, 0.8, 0.7, 0.5),
                         help="The voting threshold to be considered positive")
     parser.add_argument("-iter", "--iterations", required=False, default=3, type=int, help="The number of iterations "
@@ -56,13 +54,13 @@ def arg_parse():
     return [args.fasta_file, args.pssm_dir, args.fasta_dir, args.ifeature_dir, args.possum_dir, args.ifeature_out,
             args.possum_out, args.filtered_out, args.dbinp, args.dbout, args.num_thread, args.number_similar_samples,
             args.res_dir, args.restart, args.filter_only, args.extraction_restart, args.long, args.run, args.start,
-            args.end, args.sbatch_path, args.remove, args.value, args.iterations]
+            args.end, args.sbatch_path, args.value, args.iterations]
 
 
 class WriteSh:
     def __init__(self, fasta=None, fasta_dir="fasta_files", pssm_dir="pssm", num_threads=100, dbinp=None,
                  dbout="/gpfs/projects/bsc72/ruite/enzyminer/database/uniref50", run_path="run_files",
-                 possum_dir="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/", remove=False,
+                 possum_dir="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/",
                  iterations=3):
         """
         Initialize the ExtractPssm class
@@ -90,7 +88,6 @@ class WriteSh:
         self.num_thread = num_threads
         self.possum = possum_dir
         self.run_path = run_path
-        self.remove = remove
         self.iter = iterations
 
     def write(self, num):
@@ -108,8 +105,6 @@ class WriteSh:
             argument_list = []
             arguments = f"-f {self.fasta_dir} -p {self.pssm} -n {self.num_thread} "
             argument_list.append(arguments)
-            if self.remove:
-                argument_list.append("-rm ")
             if self.iter != 3:
                 argument_list.append(f"-iter {self.iter} ")
             if self.fasta_file:
@@ -152,10 +147,9 @@ class WriteSh:
 def main():
     fasta_file, pssm_dir, fasta_dir, ifeature_dir, possum_dir, ifeature_out, possum_out, filtered_out, dbinp, dbout, \
     num_thread, min_num, res_dir, restart, filter_only, extraction_restart, long, run, start, end, sbatch_path, \
-    remove, value, iterations = arg_parse()
+    value, iterations = arg_parse()
     if not restart:
-        sh = WriteSh(fasta_file, fasta_dir, pssm_dir, num_thread, dbinp, dbout, sbatch_path, possum_dir, remove,
-                     iterations)
+        sh = WriteSh(fasta_file, fasta_dir, pssm_dir, num_thread, dbinp, dbout, sbatch_path, possum_dir, iterations)
         sh.write_all(start, end)
     elif restart == "pssm":
         files = glob.glob(f"{sbatch_path}/pssm_*.sh")
