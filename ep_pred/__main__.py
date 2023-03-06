@@ -4,6 +4,11 @@ import os
 from prediction.predict import vote_and_filter
 from extract.feature_extraction import extract_and_filter
 from extract.generate_pssm import generate_pssm
+from subprocess import call
+import shlex
+from os.path import dirname, basename, abspath
+from Bio import SeqIO
+from Bio.SeqIO import FastaIO
 
 
 def arg_parse():
@@ -32,7 +37,7 @@ def arg_parse():
                         default="results", help="The name for the folder where to store the prediction results")
     parser.add_argument("-nss", "--number_similar_samples", required=False, default=1, type=int,
                         help="The number of similar training samples to filter the predictions")
-    parser.add_argument("-re", "--restart", required=False, choices=("pssm", "feature", "predict"),
+    parser.add_argument("-re", "--restart", required=False, choices=("feature", "predict"),
                         help="From which part of the process to restart with")
     parser.add_argument("-on", "--filter_only", required=False, help="true if you already have the features",
                         action="store_true")
@@ -89,6 +94,10 @@ class WriteSh:
         self.possum = possum_dir
         self.run_path = run_path
         self.iter = iterations
+        if fasta and dirname(fasta) != "":
+            self.base = dirname(fasta)
+        else:
+            self.base = "."
 
     def write(self, num):
         if type(num) == str:
@@ -143,19 +152,77 @@ class WriteSh:
             pssm = self.write(num)
             os.system(f"sbatch {pssm}")
 
+    def clean_fasta(self):
+        """
+        Clean the fasta file
+        """
+        illegal = f"perl {self.possum}/utils/removeIllegalSequences.pl -i {self.fasta_file} -o {self.base}/no_illegal.fasta"
+        short = f"perl {self.possum}/utils/removeShortSequences.pl -i {self.base}/no_illegal.fasta -o {self.base}/no_short.fasta -n 100"
+        call(shlex.split(illegal), close_fds=False)
+        call(shlex.split(short), close_fds=False)
+
+    def separate_single(self):
+        """
+        A function that separates the fasta files into individual files
+
+        Returns
+        _______
+        file: iterator
+            An iterator that stores the single-record fasta files
+        """
+        with open(f"{self.base}/no_short.fasta") as inp:
+            record = SeqIO.parse(inp, "fasta")
+            count = 1
+            # write the record into new fasta files
+            for seq in record:
+                with open(f"{self.fasta_dir}/seq_{count}.fsa", "w") as split:
+                    fasta_out = FastaIO.FastaWriter(split, wrap=None)
+                    fasta_out.write_record(seq)
+                count += 1
+
+    def remove_sequences_from_input(self):
+        """
+        A function that removes the fasta sequences that psiblast cannot generate pssm files from,
+        from the input fasta file. If inside the remove dir there are fasta files them you have to use this function.
+        """
+        # I search for fasta files that doesn't have pssm files
+        fasta_file = list(
+            map(lambda x: basename(x.replace(".fsa", "")), glob.glob(f"{abspath('removed_dir')}/seq_*.fsa")))
+        difference = sorted(fasta_file, key=lambda x: int(x.split("_")[1]), reverse=True)
+        if len(difference) > 0:
+            with open(f"{self.base}/no_short.fasta") as inp:
+                record = SeqIO.parse(inp, "fasta")
+                record_list = list(record)
+                # I eliminate the sequences from the input fasta file and move the single fasta sequences
+                # to another folder
+                for files in difference:
+                    num = int(files.split("_")[1]) - 1
+                    del record_list[num]
+                    # I rename the input fasta file so to create a new input fasta file with the correct sequences
+                os.rename(f"{self.base}/no_short.fasta", f"{self.base}/no_short_before_pssm.fasta")
+                with open(f"{self.base}/no_short.fasta", "w") as out:
+                    fasta_out = FastaIO.FastaWriter(out, wrap=None)
+                    fasta_out.write_file(record_list)
+
 
 def main():
     fasta_file, pssm_dir, fasta_dir, ifeature_dir, possum_dir, ifeature_out, possum_out, filtered_out, dbinp, dbout, \
     num_thread, min_num, res_dir, restart, filter_only, extraction_restart, long, run, start, end, sbatch_path, \
     value, iterations = arg_parse()
+
+    sh = WriteSh(fasta_file, fasta_dir, pssm_dir, num_thread, dbinp, dbout, sbatch_path, possum_dir, iterations)
     if not restart:
-        sh = WriteSh(fasta_file, fasta_dir, pssm_dir, num_thread, dbinp, dbout, sbatch_path, possum_dir, iterations)
-        sh.write_all(start, end)
-    elif restart == "pssm":
+        if not next(os.scandir(f"{fasta_dir}"), False):
+            sh.clean_fasta()
+            sh.separate_single()
         files = glob.glob(f"{sbatch_path}/pssm_*.sh")
-        for file in files:
-            os.system(f"sbatch {file}")
+        if not files:
+            sh.write_all(start, end)
+        else:
+            for file in files:
+                os.system(f"sbatch {file}")
     elif restart == "feature":
+        sh.remove_sequences_from_input()
         extract_and_filter(fasta_file, pssm_dir, fasta_dir, ifeature_out, possum_dir, ifeature_dir, possum_out,
                            filtered_out, filter_only, extraction_restart, long, num_thread, run)
         vote_and_filter(filtered_out, fasta_file, min_num, res_dir, value)
