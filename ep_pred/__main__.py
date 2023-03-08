@@ -189,7 +189,7 @@ class WriteSh:
         fasta_file = list(
             map(lambda x: basename(x.replace(".fsa", "")), glob.glob(f"{abspath('removed_dir')}/seq_*.fsa")))
         difference = sorted(fasta_file, key=lambda x: int(x.split("_")[1]), reverse=True)
-        if len(difference) > 0:
+        if len(difference) > 0 and not os.path.exists(f"{self.base}/no_short_before_pssm.fasta"):
             with open(f"{self.base}/no_short.fasta") as inp:
                 record = SeqIO.parse(inp, "fasta")
                 record_list = list(record)
