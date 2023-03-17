@@ -74,7 +74,7 @@ class EnsembleVoting:
         ridge = {}
         knn = {}
         # extract the features
-        transformed_x_knn, old_knn = self.scale_transform(f"{self.filtered_out}/knn_features.csv", "xgboost_30")
+        transformed_x_knn, old_knn = self.scale_transform(f"{self.filtered_out}/knn_features.csv", "rfe_30")
         transformed_x_svc, old_svc = self.scale_transform(f"{self.filtered_out}/svc_features.csv", "ch2_30")
         transformed_x_ridge, old_ridge = self.scale_transform(f"{self.filtered_out}/ridge_features.csv", "random_20")
         # load the saved models
@@ -297,7 +297,7 @@ class ApplicabilityDomain():
             for ind, seq in enumerate(record):
                 try:
                     if int(self.pred.index[p].split("_")[1]) == ind:
-                        col = self.pred[self.pred.columns[3:]].iloc[p]
+                        col = self.pred[self.pred.columns[2:]].iloc[p]
                         mean = round(sum(col) / len(col), 2)
                         col = [f"{col.index[i]}-{d}" for i, d in enumerate(col)]
                         seq.id = f"{seq.id}-{'+'.join(col)}-###prob:{mean}###AD:{self.pred['AD_number'][p]}"
@@ -412,10 +412,10 @@ def vote_and_filter(feature_out, fasta_file, min_num=1, res_dir="results", val=1
 
     # applicability domain for ridge
     domain_ridge = ApplicabilityDomain()
-    domain_ridge.fit(X_knn)
-    domain_ridge.predict(new_knn)
+    domain_ridge.fit(X_ridge)
+    domain_ridge.predict(new_ridge)
     # return the prediction after the applicability domain filter of Ridge (We save the different versions)
-    pred_ridge = domain_knn.filter(all_voting, svc, knn, ridge, min_num, f"{res_dir}/ridge_domain.parquet")
+    pred_ridge = domain_ridge.filter(all_voting, svc, knn, ridge, min_num, f"{res_dir}/ridge_domain.parquet")
     domain_ridge.extract(fasta_file, pred_ridge, positive_fasta=f"positive_ridge.fasta",
                        negative_fasta=f"negative_ridge.fasta", res_dir=res_dir)
     # Then filter again to see which sequences are within the AD of the 3 algorithms since it is an ensemble classifier

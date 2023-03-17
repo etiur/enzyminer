@@ -147,7 +147,7 @@ class ExtractFeatures:
             path to the different fasta files
         """
         num = basename(fasta_file).replace(".fasta", "").split("_")[1]
-        types = ["CKSAAGP", "CTDD"]
+        types = ["CKSAAGP", "CTDD", "QSOrder"]
         commands_1 = [
             f"python3 {self.ifeature} --file {fasta_file} --type {prog} --out {self.ifeature_out}/{prog}_{num}.tsv" for
             prog in types]
@@ -163,7 +163,7 @@ class ExtractFeatures:
             path to the different fasta files
         """
         num = basename(fasta_file).replace(".fasta", "").split("_")[1]
-        ifeature_long = ["Moran", "Geary", "NMBroto"]
+        ifeature_long = ["Moran", "Geary"]
         commands_1 = [
             f"python3 {self.ifeature} --file {fasta_file} --type {prog} --out {self.ifeature_out}/{prog}_{num}.tsv" for
             prog in ifeature_long]
@@ -180,7 +180,7 @@ class ExtractFeatures:
             path to the different files
         """
         num = basename(fasta_file).replace(".fasta", "").split("_")[1]
-        types_possum = ["pssm_composition", "tpc", "dp_pssm"]
+        types_possum = ["pssm_composition", "tpc", "dp_pssm", "ab_pssm", "rpm_pssm"]
         command_1_possum = [
             f'perl {self.possum} -i {fasta_file} -p {self.pssm_dir} -t {prog} -o {self.possum_out}/{prog}_{num}.csv' for
             prog in types_possum]
@@ -357,26 +357,25 @@ class ReadFeatures:
         distribution = [pd.read_csv(f"{self.ifeature_out}/CTDD_{i+1}.tsv", sep="\t", index_col=0) for i in range(length)]
         geary = [pd.read_csv(f"{self.ifeature_out}/Geary_{i+1}.tsv", sep="\t", index_col=0) for i in range(length)]
         moran = [pd.read_csv(f"{self.ifeature_out}/Moran_{i+1}.tsv", sep="\t", index_col=0) for i in range(length)]
-        broto = [pd.read_csv(f"{self.ifeature_out}/NMBroto_{i + 1}.tsv", sep="\t", index_col=0) for i in range(length)]
+        qsorder = [pd.read_csv(f"{self.ifeature_out}/QSOrder_{i+1}.tsv", sep="\t", index_col=0) for i in range(length)]
         # concat features if length > 1 else return the dataframe
         if length > 1:
             moran = pd.concat(moran)
             geary = pd.concat(geary)
-            broto = pd.concat(broto)
             distribution = pd.concat(distribution)
             comp_space_aa_group_pairs = pd.concat(comp_space_aa_group_pairs)
+            qsorder = pd.concat(qsorder)
         else:
             moran = moran[0]
             geary = geary[0]
-            broto = broto[0]
             distribution = distribution[0]
             comp_space_aa_group_pairs = comp_space_aa_group_pairs[0]
+            qsorder = qsorder[0]
         # change the column names
         geary.columns = [f"{x}_geary" for x in geary.columns]
         moran.columns = [f"{x}_moran" for x in moran.columns]
-        broto.columns = [f"{x}_broto" for x in broto.columns]
         # concat the features
-        all_data = pd.concat([broto, geary, moran, comp_space_aa_group_pairs, distribution], axis=1)
+        all_data = pd.concat([geary, moran, comp_space_aa_group_pairs, distribution, qsorder], axis=1)
         return all_data
 
     def read_possum(self, ID, length):
@@ -395,6 +394,8 @@ class ReadFeatures:
         tpc = [pd.read_csv(f"{self.possum_out}/tpc_{i+1}.csv") for i in range(length)]
         tri_gram_pssm = [pd.read_csv(f"{self.possum_out}/tri_gram_pssm_{i+1}.csv") for i in range(length)]
         pse_pssm_3 = [pd.read_csv(f"{self.possum_out}/pse_pssm_3_{i+1}.csv") for i in range(length)]
+        rpm_pssm = [pd.read_csv(f"{self.possum_out}/rpm_pssm_{i+1}.csv") for i in range(length)]
+        ab_pssm = [pd.read_csv(f"{self.possum_out}/ab_pssm_{i+1}.csv") for i in range(length)]
         # concat if length > 1 else return the dataframe
         if length > 1:
             dp_pssm = pd.concat(dp_pssm)
@@ -403,6 +404,8 @@ class ReadFeatures:
             tpc = pd.concat(tpc)
             tri_gram_pssm = pd.concat(tri_gram_pssm)
             pse_pssm_3 = pd.concat(pse_pssm_3)
+            rpm_pssm = pd.concat(rpm_pssm)
+            ab_pssm = pd.concat(ab_pssm)
         else:
             dp_pssm = dp_pssm[0]
             pssm_cc = pssm_cc[0]
@@ -410,6 +413,8 @@ class ReadFeatures:
             tpc = tpc[0]
             tri_gram_pssm = tri_gram_pssm[0]
             pse_pssm_3 = pse_pssm_3[0]
+            rpm_pssm = rpm_pssm[0]
+            ab_pssm = ab_pssm[0]
 
         # change the index and columns
         assert len(dp_pssm) == len(ID), "Difference in length between possum and ifeature Features "
@@ -418,12 +423,14 @@ class ReadFeatures:
         pssm_composition.index = ID
         tpc.index = ID
         tri_gram_pssm.index = ID
+        rpm_pssm.index = ID
+        ab_pssm.index = ID
         index = pse_pssm_3.columns
         index_3 = [f"{x}_3" for x in index]
         pse_pssm_3.index = ID
         pse_pssm_3.columns = index_3
         # Possum features
-        feature = [dp_pssm, pssm_cc, pssm_composition, tpc, tri_gram_pssm, pse_pssm_3]
+        feature = [dp_pssm, pssm_cc, pssm_composition, tpc, tri_gram_pssm, pse_pssm_3, rpm_pssm, ab_pssm]
         everything = pd.concat(feature, axis=1)
 
         return everything
@@ -447,7 +454,7 @@ class ReadFeatures:
             os.makedirs(self.filtered_out)
         self.read()
         svc = pd.read_excel(f"{self.learning}", index_col=0, sheet_name="ch2_30")
-        knn = pd.read_excel(f"{self.learning}", index_col=0, sheet_name="xgboost_30")
+        knn = pd.read_excel(f"{self.learning}", index_col=0, sheet_name="rfe_30")
         ridge = pd.read_excel(f"{self.learning}", index_col=0, sheet_name="random_20")
 
         # write the new features to csv
