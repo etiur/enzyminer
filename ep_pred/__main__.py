@@ -120,8 +120,6 @@ class WriteSh:
                 argument_list.append(f"-i {self.fasta_file} ")
             if type(num) == int:
                 argument_list.append(f"-num {num} ")
-            if self.possum != "/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit/":
-                argument_list.append(f"-Po {self.possum} ")
             if self.dbout != "/gpfs/projects/bsc72/ruite/enzyminer/database/uniref50":
                 argument_list.append(f"-do {self.dbout} ")
             if self.dbinp:
