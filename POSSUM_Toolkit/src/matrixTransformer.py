@@ -86,7 +86,7 @@ def handleRows(PSSM, SWITCH, COUNT):
     # 0-19 represents amino acid 'ARNDCQEGHILKMFPSTWYV'
     Amino_vec = "ARNDCQEGHILKMFPSTWYV"
 
-    matrix_final = [ [0.0] * 20 ] * (COUNT/20)
+    matrix_final = [ [0.0] * 20 ] * int(COUNT/20)
     matrix_final=np.array(matrix_final)
     seq_cn = 0
 
@@ -94,7 +94,7 @@ def handleRows(PSSM, SWITCH, COUNT):
     for i in range(PSSM_shape[0]):
         seq_cn += 1
         str_vec=PSSM[i]
-        str_vec_positive=map(int, str_vec[1:21])
+        str_vec_positive=list(map(int, str_vec[1:21]))
         str_vec_positive=np.array(str_vec_positive)
         if SWITCH==1:
             str_vec_positive[str_vec_positive<0]=0
@@ -104,12 +104,9 @@ def handleRows(PSSM, SWITCH, COUNT):
         #print "str_vec_positive="
         #print str_vec_positive
         if COUNT==20:
-            matrix_final[0]=map(sum, zip(str_vec_positive, matrix_final[0]))
+            matrix_final[0]=list(map(sum, zip(str_vec_positive, matrix_final[0])))
         elif COUNT==400:
-            matrix_final[Amino_vec.index(str_vec[0])] = map(sum, zip(str_vec_positive, matrix_final[Amino_vec.index(str_vec[0])]))
-
-        #print "matrix_final="
-        #print matrix_final
+            matrix_final[Amino_vec.index(str_vec[0])] = list(map(sum, zip(list(str_vec_positive), matrix_final[Amino_vec.index(str_vec[0])])))
 
     return matrix_final
 
@@ -192,7 +189,7 @@ def handleMixed(PSSM,ALPHA):
     seq_cn=np.shape(PSSM)[0]
     for i in range(seq_cn):
         #print PSSM_norm[i]
-        row1=map(sum, zip(row1, PSSM_norm[i]))
+        row1=list(map(sum, zip(row1, PSSM_norm[i])))
     #print row1
     row1=np.divide(row1,seq_cn)
 
@@ -275,13 +272,13 @@ def handleMixed3(PSSM):
     PSSM=np.array(PSSM)
     #print "PSSM="
     #print PSSM
-    RPSSM[:,0]=np.divide(map(sum,zip(PSSM[:,13],PSSM[:,17],PSSM[:,18])), 3.0)
-    RPSSM[:,1]=np.divide(map(sum,zip(PSSM[:,10],PSSM[:,12])), 2.0)
-    RPSSM[:,2]=np.divide(map(sum,zip(PSSM[:,9],PSSM[:,19])), 2.0)
-    RPSSM[:,3]=np.divide(map(sum,zip(PSSM[:,0],PSSM[:,15],PSSM[:,16])), 3.0)
-    RPSSM[:,4]=np.divide(map(sum,zip(PSSM[:,2],PSSM[:,8])), 2.0)
-    RPSSM[:,5]=np.divide(map(sum,zip(PSSM[:,5],PSSM[:,6],PSSM[:,3])), 3.0)
-    RPSSM[:,6]=np.divide(map(sum,zip(PSSM[:,1],PSSM[:,11])), 2.0)
+    RPSSM[:,0]=np.divide(list(map(sum,zip(PSSM[:,13],PSSM[:,17],PSSM[:,18]))), 3.0)
+    RPSSM[:,1]=np.divide(list(map(sum,zip(PSSM[:,10],PSSM[:,12]))), 2.0)
+    RPSSM[:,2]=np.divide(list(map(sum,zip(PSSM[:,9],PSSM[:,19]))), 2.0)
+    RPSSM[:,3]=np.divide(list(map(sum,zip(PSSM[:,0],PSSM[:,15],PSSM[:,16]))), 3.0)
+    RPSSM[:,4]=np.divide(list(map(sum,zip(PSSM[:,2],PSSM[:,8]))), 2.0)
+    RPSSM[:,5]=np.divide(list(map(sum,zip(PSSM[:,5],PSSM[:,6],PSSM[:,3]))), 3.0)
+    RPSSM[:,6]=np.divide(list(map(sum,zip(PSSM[:,1],PSSM[:,11]))), 2.0)
     RPSSM[:,7]=PSSM[:,4]
     RPSSM[:,8]=PSSM[:,7]
     RPSSM[:,9]=PSSM[:,14]

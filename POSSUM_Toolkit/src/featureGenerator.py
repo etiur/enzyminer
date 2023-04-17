@@ -48,14 +48,13 @@ def smoothed_pssm(input_matrix, SMOOTH, SLIDE):
     return smoothed_pssm_matrix
 
 def ab_pssm(input_matrix):
-    #print "start ab_pssm function"
+    # print("start ab_pssm function")
     seq_cn=np.shape(input_matrix)[0]
     BLOCK=int(seq_cn/20)
     #print(BLOCK)
     matrix_final=[]
     for i in range(19):
         tmp=input_matrix[i*BLOCK:(i+1)*BLOCK]
-        #print(tmp)
         matrix_final.append(aac_pssm(tmp)[0])
     tmp=input_matrix[19*BLOCK:]
     #print tmp
@@ -150,7 +149,7 @@ def tpc(input_matrix):
     matrix_tmp=[0.0] * 20
     matrix_tmp=np.array(matrix_tmp)
     for i in range(20):
-        matrix_tmp=map(sum, zip(matrix_final[i], matrix_tmp))
+        matrix_tmp=list(map(sum, zip(matrix_final[i], matrix_tmp)))
     for i in range(20):
         for j in range(20):
             matrix_final[i][j]=matrix_final[i][j]/matrix_tmp[j]
@@ -172,7 +171,7 @@ def edp(input_matrix):
     output_matrix=preHandleColumns(input_matrix,STEP,PART,ID)
     output_matrix=np.array(output_matrix)
     for i in range(20):
-        edp_matrix[0]=map(sum, zip(output_matrix[i], edp_matrix[0]))
+        edp_matrix[0]=list(map(sum, zip(output_matrix[i], edp_matrix[0])))
     edp_matrix=np.divide(edp_matrix, (seq_cn-STEP)*20.0)
     #print "end edp function"
     return edp_matrix

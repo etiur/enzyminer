@@ -3,13 +3,13 @@
 # Authors: Chris (chris@nohup.cc) & Young (young@nohup.cc)
 
 def usage():
-    print "possum.py usage:"
-    print "python possum.py <options> <source files> "
-    print "-i,--input: input a file in fasta format."
-    print "-o,--ouput: output a file of the generated feature."
-    print "-t,--type: specify a feature encoding algorithm."
-    print "-p,--pssmdir: specify the directory of pssm files."
-    print "-h,--help: show the help information."
+    print("possum.py usage:")
+    print("python possum.py <options> <source files> ")
+    print("-i,--input: input a file in fasta format.")
+    print("-o,--ouput: output a file of the generated feature.")
+    print("-t,--type: specify a feature encoding algorithm.")
+    print("-p,--pssmdir: specify the directory of pssm files.")
+    print("-h,--help: show the help information.")
 
 import fileinput
 import sys, getopt
@@ -81,9 +81,9 @@ for smp in smplist:
     try:
         finalist.append(pssmdir+'/'+fastaDict[smp])
     except KeyError:
-        print "Key: {}".format(smp)
-
-file_out = file(outputFile,'w')
+        print ("Key: {}".format(smp))
+        
+file_out = open(outputFile,'w')
 for fi in finalist:
     #print "fi=" + fi
     #pass in original matrix
@@ -92,3 +92,4 @@ for fi in finalist:
     #input_matrix=readToMatrix(input_matrix)
     feature_vector=calculateDescriptors(input_matrix, algoType, argument, veriable)
     np.savetxt(file_out, feature_vector, delimiter=",")
+file_out.close()
