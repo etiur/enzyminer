@@ -50,7 +50,7 @@ def arg_parse():
     parser.add_argument("-en", "--end", required=False, type=int, help="The ending number, not included")
     parser.add_argument("-sp", "--sbatch_path", required=False,
                         help="The folder to keep the run files for generating pssm", default="run_files")
-    parser.add_argument("-v", "--value", required=False, default=1, type=float, choices=(1, 0.8, 0.7, 0.5),
+    parser.add_argument("-v", "--value", required=False, default=1, type=float, choices=(1, 0.8, 0.5),
                         help="The voting threshold to be considered positive")
     parser.add_argument("-iter", "--iterations", required=False, default=3, type=int, help="The number of iterations "
                                                                                          "in PSIBlast")

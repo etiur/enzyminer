@@ -21,7 +21,7 @@ def arg_parse():
     parser.add_argument("-i", "--fasta_file", help="The fasta file path")
     parser.add_argument("-rs", "--res_dir", required=False,
                         default="results", help="The name for the folder where to store the prediction results")
-    parser.add_argument("-v", "--value", required=False, default=1, type=float, choices=(1, 0.8, 0.7, 0.5),
+    parser.add_argument("-v", "--value", required=False, default=1, type=float, choices=(1, 0.8, 0.5),
                         help="The voting threshold to be considered positive")
     args = parser.parse_args()
 
@@ -240,7 +240,7 @@ class ApplicabilityDomain():
         Parameters
         ___________
         prediction: array
-            An array of the predictions
+            An array of the average of predictions
         svc: dict[array]
             The prediction of the SVC models
         knn: dict[array]
@@ -364,7 +364,8 @@ class ApplicabilityDomain():
             fasta_pos = FastaIO.FastaWriter(pos, wrap=None)
             fasta_pos.write_file(positive)
         with open(f"{res_dir}/{negative_fasta}", "w") as neg:
-            negative = sorted(negative, reverse=True, key=lambda x: int(x.id.split("###")[2].split(":")[1].split("-")[0]))
+            negative = sorted(negative, reverse=True, key=lambda x: (float(x.id.split("###")[1].split(":")[1]),
+                                                                     int(x.id.split("###")[2].split(":")[1].split("-")[0])))
             fasta_neg = FastaIO.FastaWriter(neg, wrap=None)
             fasta_neg.write_file(negative)
 

@@ -4,7 +4,7 @@ import shutil
 from Bio import SeqIO
 from Bio.SeqIO import FastaIO
 import shlex
-from subprocess import Popen
+from subprocess import Popen, PIPE
 import time
 import pandas as pd
 import glob
@@ -41,7 +41,7 @@ def arg_parse():
     args = parser.parse_args()
 
     return [args.fasta_file, args.pssm_dir, args.fasta_dir, args.ifeature_dir, args.possum_dir, args.ifeature_out,
-            args.possum_out, args.filtered_out, args.filter_only, args.extract_restart, args.long, args.run,
+            args.possum_out, args.filtered_out, args.filter_only, args.extraction_restart, args.long, args.run,
             args.num_thread]
 
 
@@ -128,10 +128,13 @@ class ExtractFeatures:
         program_name: str, optional
             A name to identify the commands
         """
-        proc = [Popen(shlex.split(command), close_fds=False) for command in commands]
+        proc = [Popen(shlex.split(command), stderr=PIPE, stdout=PIPE, text=True) for command in commands]
         start = time.time()
         for p in proc:
-            p.wait()
+            output, errors = p.communicate()
+            with open(f"error_file.txt", "a") as out:
+                out.write(f"{output}")
+                out.write(f"{errors}")
         end = time.time()
         if program_name:
             print(f"start running {program_name}")
@@ -505,7 +508,6 @@ def extract_and_filter(fasta_file=None, pssm_dir="pssm", fasta_dir="fasta_files"
         extract = ExtractFeatures(fasta_file, pssm_dir, fasta_dir, ifeature_out, possum_out, ifeature_dir, thread, run,
                                   possum_dir)
         extract.run_extraction_parallel(restart, long)
-
     # feature filtering
     filtering = ReadFeatures(fasta_file, ifeature_out, possum_out, filtered_out)
     filtering.filter_features()
@@ -514,6 +516,7 @@ def extract_and_filter(fasta_file=None, pssm_dir="pssm", fasta_dir="fasta_files"
 def main():
     fasta_file, pssm_dir, fasta_dir, ifeature_dir, possum_dir, ifeature_out, possum_out, filtered_out, filter_only, \
     extraction_restart, long, run, num_thread = arg_parse()
+
     extract_and_filter(fasta_file, pssm_dir, fasta_dir, ifeature_out, possum_dir, ifeature_dir, possum_out,
                        filtered_out, filter_only, extraction_restart, long, num_thread, run)
 

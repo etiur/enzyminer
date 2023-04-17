@@ -50,12 +50,12 @@ def smoothed_pssm(input_matrix, SMOOTH, SLIDE):
 def ab_pssm(input_matrix):
     #print "start ab_pssm function"
     seq_cn=np.shape(input_matrix)[0]
-    BLOCK=seq_cn/20
-    #print BLOCK
+    BLOCK=int(seq_cn/20)
+    #print(BLOCK)
     matrix_final=[]
     for i in range(19):
         tmp=input_matrix[i*BLOCK:(i+1)*BLOCK]
-        #print tmp
+        #print(tmp)
         matrix_final.append(aac_pssm(tmp)[0])
     tmp=input_matrix[19*BLOCK:]
     #print tmp
