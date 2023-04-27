@@ -51,8 +51,8 @@ class ExtractFeatures:
     """
 
     def __init__(self, fasta_file, pssm_dir="pssm", fasta_dir="fasta_files", ifeature_out="ifeature_features",
-                 possum_out="possum_features", ifeature_dir="/gpfs/projects/bsc72/ruite/enzyminer/iFeature",
-                 thread=12, run="both", possum_dir="/gpfs/projects/bsc72/ruite/enzyminer/POSSUM_Toolkit"):
+                 possum_out="possum_features", ifeature_dir="../iFeature",
+                 thread=12, run="both", possum_dir="../POSSUM_Toolkit"):
         """
         Initialize the ExtractFeatures class
 
@@ -279,7 +279,7 @@ class ExtractFeatures:
         # using shlex.split to parse the strings into lists for Popen class
         self.run_progam(command_1_possum, "All Possum programs")
 
-    def run_extraction_parallel(self, restart=None, long=None):
+    def run_extraction_parallel(self, long=None):
         """
         Using a pool of workers to run the 2 programmes
 
@@ -299,8 +299,6 @@ class ExtractFeatures:
             self._separate_bunch()
         file = glob.glob(f"{self.base}/group_*.fasta")
         file.sort(key=lambda x: int(basename(x).replace(".fasta", "").split("_")[1]))
-        if restart:
-            file = file[file.index(restart):]
         with Pool(processes=self.thread) as pool:
             if self.run == "both":
                 if not long:
@@ -342,7 +340,7 @@ class ReadFeatures:
         self.ifeature_out = ifeature_out
         self.possum_out = possum_out
         self.features = None
-        self.learning = "/gpfs/projects/bsc72/ruite/enzyminer/data/final_features.xlsx"
+        self.learning = "../data/final_features.xlsx"
         self.filtered_out = filtered_out
         if len(fasta_file.split("/")) > 1:
             self.base = os.path.dirname(fasta_file)
@@ -473,9 +471,9 @@ class ReadFeatures:
 
 
 def extract_and_filter(fasta_file=None, pssm_dir="pssm", fasta_dir="fasta_files", ifeature_out="ifeature_features",
-                       possum_dir="/gpfs/home/bsc72/bsc72661/feature_extraction/POSSUM_Toolkit",
-                       ifeature_dir="/gpfs/projects/bsc72/ruite/enzyminer/iFeature", possum_out="possum_features",
-                       filtered_out="filtered_features", filter_only=False, restart=None, long=False, thread=100,
+                       possum_dir="../POSSUM_Toolkit",
+                       ifeature_dir="../iFeature", possum_out="possum_features",
+                       filtered_out="filtered_features", filter_only=False, long=False, thread=100,
                        run="both"):
     """
     A function to extract and filter the features
@@ -507,7 +505,7 @@ def extract_and_filter(fasta_file=None, pssm_dir="pssm", fasta_dir="fasta_files"
     if not filter_only:
         extract = ExtractFeatures(fasta_file, pssm_dir, fasta_dir, ifeature_out, possum_out, ifeature_dir, thread, run,
                                   possum_dir)
-        extract.run_extraction_parallel(restart, long)
+        extract.run_extraction_parallel(long)
     # feature filtering
     filtering = ReadFeatures(fasta_file, ifeature_out, possum_out, filtered_out)
     filtering.filter_features()

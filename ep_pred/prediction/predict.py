@@ -43,8 +43,8 @@ class EnsembleVoting:
             The path to the directory where the new extracted feature files are
         """
         self.filtered_out = feature_out
-        self.learning = "/gpfs/projects/bsc72/ruite/enzyminer/data/final_features.xlsx"
-        self.models = "/gpfs/projects/bsc72/ruite/enzyminer/final_models"
+        self.learning = "../data/final_features.xlsx"
+        self.models = "../final_models"
 
     def scale_transform(self, file_path, feature_set):
         """
@@ -136,7 +136,7 @@ class ApplicabilityDomain():
         self.pred = []
         self.dataframe = None
         self.n_insiders = []
-        path_to_esterase = "/gpfs/projects/bsc72/ruite/enzyminer/data/final_features.xlsx"
+        path_to_esterase = "../final_features.xlsx"
         x_svc = pd.read_excel(f"{path_to_esterase}", index_col=0, sheet_name=f"ch2_30", engine='openpyxl')
         self.training_names = x_svc.index
         self.ad_indices = []
