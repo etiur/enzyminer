@@ -31,7 +31,6 @@ def arg_parse():
                         default="filtered_features")
     parser.add_argument("-on", "--filter_only", required=False, help="true if you already have the features",
                         action="store_true")
-    parser.add_argument("-er", "--extraction_restart", required=False, help="The file to restart the extraction with")
     parser.add_argument("-lg", "--long", required=False, help="true when restarting from the long commands",
                         action="store_true")
     parser.add_argument("-r", "--run", required=False, choices=("possum", "ifeature", "both"), default="both",
@@ -41,8 +40,7 @@ def arg_parse():
     args = parser.parse_args()
 
     return [args.fasta_file, args.pssm_dir, args.fasta_dir, args.ifeature_dir, args.possum_dir, args.ifeature_out,
-            args.possum_out, args.filtered_out, args.filter_only, args.extraction_restart, args.long, args.run,
-            args.num_thread]
+            args.possum_out, args.filtered_out, args.filter_only, args.long, args.run, args.num_thread]
 
 
 class ExtractFeatures:
@@ -279,7 +277,7 @@ class ExtractFeatures:
         # using shlex.split to parse the strings into lists for Popen class
         self.run_progam(command_1_possum, "All Possum programs")
 
-    def run_extraction_parallel(self, restart=None, long=None):
+    def run_extraction_parallel(self, long=None):
         """
         Using a pool of workers to run the 2 programmes
 
@@ -475,7 +473,7 @@ class ReadFeatures:
 def extract_and_filter(fasta_file=None, pssm_dir="pssm", fasta_dir="fasta_files", ifeature_out="ifeature_features",
                        possum_dir="/gpfs/home/bsc72/bsc72661/feature_extraction/POSSUM_Toolkit",
                        ifeature_dir="/gpfs/projects/bsc72/ruite/enzyminer/iFeature", possum_out="possum_features",
-                       filtered_out="filtered_features", filter_only=False, restart=None, long=False, thread=100,
+                       filtered_out="filtered_features", filter_only=False, long=False, thread=100,
                        run="both"):
     """
     A function to extract and filter the features
@@ -507,7 +505,7 @@ def extract_and_filter(fasta_file=None, pssm_dir="pssm", fasta_dir="fasta_files"
     if not filter_only:
         extract = ExtractFeatures(fasta_file, pssm_dir, fasta_dir, ifeature_out, possum_out, ifeature_dir, thread, run,
                                   possum_dir)
-        extract.run_extraction_parallel(restart, long)
+        extract.run_extraction_parallel(long)
     # feature filtering
     filtering = ReadFeatures(fasta_file, ifeature_out, possum_out, filtered_out)
     filtering.filter_features()
@@ -515,10 +513,10 @@ def extract_and_filter(fasta_file=None, pssm_dir="pssm", fasta_dir="fasta_files"
 
 def main():
     fasta_file, pssm_dir, fasta_dir, ifeature_dir, possum_dir, ifeature_out, possum_out, filtered_out, filter_only, \
-    extraction_restart, long, run, num_thread = arg_parse()
+    long, run, num_thread = arg_parse()
 
     extract_and_filter(fasta_file, pssm_dir, fasta_dir, ifeature_out, possum_dir, ifeature_dir, possum_out,
-                       filtered_out, filter_only, extraction_restart, long, num_thread, run)
+                       filtered_out, filter_only, long, num_thread, run)
 
 
 if __name__ == "__main__":
