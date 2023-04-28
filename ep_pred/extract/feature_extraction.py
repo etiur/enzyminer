@@ -283,8 +283,6 @@ class ExtractFeatures:
 
         Parameters
         ----------
-        restart: str
-            The file to restart the programmes with
         long:
             If to run only the longer features
         """
@@ -297,8 +295,7 @@ class ExtractFeatures:
             self._separate_bunch()
         file = glob.glob(f"{self.base}/group_*.fasta")
         file.sort(key=lambda x: int(basename(x).replace(".fasta", "").split("_")[1]))
-        if restart:
-            file = file[file.index(restart):]
+
         with Pool(processes=self.thread) as pool:
             if self.run == "both":
                 if not long:
