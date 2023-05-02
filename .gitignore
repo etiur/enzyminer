@@ -9,3 +9,8 @@ development/outlier.py
 utilities/*
 *.pt
 .idea/*
+test
+ep_pred/__pycache__
+ep_pred/extract/__pycache__
+ep_pred/prediction/__pycache__
+.vscode/launch.json
