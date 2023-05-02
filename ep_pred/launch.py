@@ -62,7 +62,7 @@ def arg_parse():
             args.res_dir, args.restart, args.filter_only, args.extraction_restart, args.long, args.run, args.start,
             args.end, args.sbatch_path, args.value, args.iterations]
 
-class launcher:
+class Launcher_EPpred:
     def __init__(self, fasta_file, pssm_dir, fasta_dir, ifeature_dir, possum_dir, ifeature_out, possum_out, filtered_out, dbinp, dbout,
                 num_thread, min_num, res_dir, restart, filter_only, extraction_restart, long, run, iterations) -> None:
         
@@ -139,9 +139,9 @@ class launcher:
         from the input fasta file. If inside the remove dir there are fasta files them you have to use this function.
         """
         # Search for fasta files that doesn't have pssm files
-        fasta_file = list(map(lambda x: basename(x.replace(".fsa", "")), glob.glob(
+        fasta_files = list(map(lambda x: basename(x.replace(".fsa", "")), glob.glob(
             f"{abspath('removed_dir')}/seq_*.fsa")))
-        difference = sorted(fasta_file, key=lambda x: int(
+        difference = sorted(fasta_files, key=lambda x: int(
             x.split("_")[1]), reverse=True)
 
         if len(difference) > 0 and not os.path.exists(f"{self.base}/no_short_before_pssm.fasta"):
@@ -162,6 +162,9 @@ class launcher:
     
 
     def launch(self):
+        """
+        A function that launches the pipeline
+        """
         
         if not self.restart:
             if not next(os.scandir(f"{self.fasta_dir}"), False):
@@ -169,24 +172,73 @@ class launcher:
                 self._separate_single()
                 generate_pssm(num_threads=self.num_thread, fasta_dir=self.fasta_dir, pssm_dir=self.pssm, dbinp=self.dbinp,
                             dbout=self.dbout, num="*", fasta=self.fasta_file, iterations=self.iter)
+                self._remove_sequences_from_input()
                 self.restart = "feature"
         if self.restart == "feature":
-            self._remove_sequences_from_input()
             extract_and_filter(fasta_file=self.fasta_file, pssm_dir=self.pssm, fasta_dir=self.fasta_dir, ifeature_out=self.ifeature_out, 
                                possum_dir=self.possum_dir, ifeature_dir=self.ifeature_dir, possum_out=self.possum_out,
                                filtered_out=self.filtered_out, filter_only=self.filter_only, long=self.long, 
                                thread=self.num_thread, run = self.run)
             self.restart = "predict"
         if self.restart == "predict":
-            vote_and_filter(filtered_out, fasta_file, min_num, res_dir, value)
+            vote_and_filter(feature_out=self.filtered_out, fasta_file=self.fasta_file, min_num=self.min_num, res_dir=self.res_dir, val=self.value)
 
 def main():
+    """
+    A function that runs the whole pipeline
+
+    Parameters
+    ==========
+    fasta_file: str
+        The path to the fasta file
+    pssm_dir: str
+        The path to the pssm directory
+    fasta_dir: str
+        The path to the fasta directory
+    ifeature_dir: str
+        The path to the ifeature directory
+    possum_dir: str
+        The path to the possum directory
+    ifeature_out: str
+        The path to the ifeature output directory
+    possum_out: str
+        The path to the possum output directory
+    filtered_out: str
+        The path to the filtered output directory
+    dbinp: str
+        The path to the database input directory
+    dbout: str
+        The path to the database output directory
+    num_thread: int
+        The number of threads to use
+    min_num: int
+        The minimum number of sequences to use
+    res_dir: str
+        The path to the result directory
+    restart: str
+        The step to restart from
+    filter_only: bool
+        If True then only the filtering step will be executed
+    long: bool
+        If True then the long version of the pipeline will be executed
+    run: bool
+        If True then the pipeline will be executed
+    start: int
+        The starting iteration
+    end: int
+        The ending iteration
+    sbatch_path: str
+        The path to the sbatch file
+    value: int
+        The value to use for the filtering
+    iterations: int
+        The number of iterations to use
+    """      
+
     fasta_file, pssm_dir, fasta_dir, ifeature_dir, possum_dir, ifeature_out, possum_out, filtered_out, dbinp, dbout, \
-        num_thread, min_num, res_dir, restart, filter_only, long, run, start, end, sbatch_path, \
-        value, iterations = arg_parse()
-    l = launcher(fasta_file, pssm_dir, fasta_dir, ifeature_dir, possum_dir, ifeature_out, possum_out, filtered_out, dbinp, dbout,
-        num_thread, min_num, res_dir, restart, filter_only, long, run, start, end, sbatch_path,
-        value, iterations)
+        num_thread, min_num, res_dir, restart, filter_only, long, run, value, iterations = arg_parse()
+    l = Launcher_EPpred(fasta_file, pssm_dir, fasta_dir, ifeature_dir, possum_dir, ifeature_out, possum_out, filtered_out, dbinp, dbout,
+        num_thread, min_num, res_dir, restart, filter_only, long, run, value, iterations)
     l.launch()
 
 if __name__ == "__main__":
