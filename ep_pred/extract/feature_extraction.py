@@ -7,9 +7,9 @@ import shlex
 from subprocess import Popen, PIPE
 import time
 import pandas as pd
-import glob
-from os.path import basename, dirname
+from os.path import basename
 from multiprocessing import Pool
+from pathlib import Path
 
 
 def arg_parse():
@@ -71,14 +71,9 @@ class ExtractFeatures:
         possum_out: str, optional
             A directory for the extraction results from possum
         """
-        if dirname(fasta_file) != "":
-            self.base = dirname(fasta_file)
-        else:
-            self.base = "."
-        if os.path.exists(f"{self.base}/no_short.fasta"):
-            self.fasta_file = f"{self.base}/no_short.fasta"
-        else:
-            self.fasta_file = fasta_file
+        self.fasta_file = Path(fasta_file)
+        if (self.fasta_file.parent / "no_short.fasta").exists():
+            self.fasta_file = self.fasta_file.parent / "no_short.fasta"
         self.pssm_dir = pssm_dir
         self.fasta_dir = fasta_dir
         self.ifeature = f"{ifeature_dir}/iFeature.py"
@@ -102,18 +97,18 @@ class ExtractFeatures:
         num: int
             The number of files to separate the original fasta_file
         """
-        with open(f"{self.base}/no_short.fasta") as inp:
+        with open(self.fasta_file) as inp:
             record = list(SeqIO.parse(inp, "fasta"))
             if len(record) > 5_000:
                 for i, batch in enumerate(self._batch_iterable(record, 5_000)):
                     filename = f"group_{i+1}.fasta"
-                    with open(f"{self.base}/{filename}", "w") as split:
-                        print(f"{self.base}/{filename}")
+                    with open(f"{self.fasta_file.parent}/{filename}", "w") as split:
+                        print(f"{self.fasta_file.parent}/{filename}")
                         fasta_out = FastaIO.FastaWriter(split, wrap=None)
                         fasta_out.write_file(batch)
                 del record
             else:
-                shutil.copyfile(f"{self.base}/no_short.fasta", f"{self.base}/group_1.fasta")
+                shutil.copyfile(self.fasta_file, f"{self.fasta_file.parent}/group_1.fasta")
 
     @staticmethod
     def run_progam(commands, program_name=None):
@@ -290,10 +285,10 @@ class ExtractFeatures:
             os.makedirs(f"{self.possum_out}")
         if not os.path.exists(f"{self.ifeature_out}"):
             os.makedirs(f"{self.ifeature_out}")
-        name = f"{self.base}/group_1.fasta"
-        if not os.path.exists(name):
+        name = self.fasta_file.parent/"group_1.fasta"
+        if not name.exists():
             self._separate_bunch()
-        file = glob.glob(f"{self.base}/group_*.fasta")
+        file = list(self.fasta_file.parent.glob(f"group_*.fasta"))
         file.sort(key=lambda x: int(basename(x).replace(".fasta", "").split("_")[1]))
 
         with Pool(processes=self.thread) as pool:
@@ -339,10 +334,7 @@ class ReadFeatures:
         self.features = None
         self.learning = "/gpfs/projects/bsc72/ruite/enzyminer/data/final_features.xlsx"
         self.filtered_out = filtered_out
-        if len(fasta_file.split("/")) > 1:
-            self.base = os.path.dirname(fasta_file)
-        else:
-            self.base = "."
+        self.base = Path(fasta_file).parent
 
     def read_ifeature(self, length):
         """
@@ -437,7 +429,7 @@ class ReadFeatures:
         """
         Reads all the features
         """
-        file = glob.glob(f"{self.base}/group_*.fasta")
+        file = list(self.base.glob(f"group_*.fasta"))
         all_data = self.read_ifeature(len(file))
         everything = self.read_possum(all_data.index, len(file))
         # concatenate the features

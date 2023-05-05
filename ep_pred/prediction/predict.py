@@ -7,7 +7,7 @@ from scipy.spatial import distance
 from Bio import SeqIO
 from Bio.SeqIO import FastaIO
 import os
-from os.path import dirname
+from pathlib import Path
 
 
 def arg_parse():
@@ -285,11 +285,10 @@ class ApplicabilityDomain():
         if pred is not None:
             self.pred = pred
         # separating the records according to if the prediction is positive or negative
-        if dirname(fasta_file) != "":
-            base = dirname(fasta_file)
-        else:
-            base = "."
-        with open(f"{base}/no_short.fasta") as inp:
+        self.fasta_file = Path(fasta_file)
+        if (self.fasta_file.parent / "no_short.fasta").exists():
+            self.fasta_file = self.fasta_file.parent / "no_short.fasta"
+        with open(self.fasta_file) as inp:
             record = SeqIO.parse(inp, "fasta")
             p = 0
             positive = []
