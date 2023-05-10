@@ -3,7 +3,7 @@ import glob
 import os
 from prediction.predict import vote_and_filter
 from extract.feature_extraction import extract_and_filter
-from extract.generate_pssm import generate_pssm
+from pathlib import Path
 from subprocess import call
 import shlex
 from os.path import dirname, basename, abspath
@@ -93,10 +93,7 @@ class WriteSh:
         self.possum = possum_dir
         self.run_path = run_path
         self.iter = iterations
-        if fasta and dirname(fasta) != "":
-            self.base = dirname(fasta)
-        else:
-            self.base = "."
+        self.base = Path(fasta).parent
 
     def write(self, num):
         if type(num) == str:
@@ -209,6 +206,7 @@ def main():
 
     sh = WriteSh(fasta_file, fasta_dir, pssm_dir, num_thread, dbinp, dbout, sbatch_path, possum_dir, iterations)
     if not restart:
+        Path(fasta_dir).mkdir(exist_ok=True, parents=True)
         if not next(os.scandir(f"{fasta_dir}"), False):
             sh.clean_fasta()
             sh.separate_single()
