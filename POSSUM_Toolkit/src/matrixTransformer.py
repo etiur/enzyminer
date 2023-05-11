@@ -63,13 +63,13 @@ def window(PSSM, w_smth, w_slide):
 def pssm_smth(PSSM_orig, PSSM_smth, w_smth, l):
     for i in range(l):
         if i <(w_smth-1)/2:
-            for j in range(i+(w_smth-1)/2+1):
+            for j in range(i+int((w_smth-1)/2)+1):
                 PSSM_smth[i]+=PSSM_orig[j]
         elif i>=(l-(w_smth-1)/2):
-            for j in range(i-(w_smth-1)/2,l):
+            for j in range(i-int((w_smth-1)/2),l):
                 PSSM_smth[i]+=PSSM_orig[j]
         else:
-            for j in range(i-(w_smth-1)/2,i+(w_smth-1)/2+1):
+            for j in range(i-int((w_smth-1)/2),i+int((w_smth-1)/2)+1):
                 PSSM_smth[i]+=PSSM_orig[j]
     return PSSM_smth
 

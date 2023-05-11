@@ -89,61 +89,61 @@ if($header eq ''){
 if($type eq "aac_pssm") {
 	if($header eq "T"){
 		print "Start to extract aac_pssm feature\n";
-		print "python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract aac_pssm feature\n";
-		if (-e "tmp/$ouputFileName\_no_header"){
+		if (-e "$ouputFileName\_no_header"){
 			print "\n";
 			print "Adding header\n";
 
-			print "python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 20 -o $output_file\n";
-			print `python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 20 -o $output_file`;
+			print "python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 20 -o $output_file\n";
+			print `python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 20 -o $output_file`;
 			if($my_env_osname eq 'MSWin32'){
 				print "\n";
-				print "Deleting tmp\\$ouputFileName\_no_header\n";
-				print "del tmp\\$ouputFileName\_no_header\n";
-				print `del tmp\\$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "del $ouputFileName\_no_header\n";
+				print `del $ouputFileName\_no_header`;
 			} else {
 				print "\n";
-				print "Deleting tmp/$ouputFileName\_no_header\n";
-				print "rm tmp/$ouputFileName\_no_header\n";
-				print `rm tmp/$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "rm $ouputFileName\_no_header\n";
+				print `rm $ouputFileName\_no_header`;
 			}
 		}
 	} elsif ($header eq "F"){
 		print "Start to extract aac_pssm feature\n";
-		print "python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract aac_pssm feature\n";
 	}
 } elsif($type eq "d_fpssm") {
 	if($header eq "T"){
 		print "Start to extract d_fpssm feature\n";
-		print "python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract d_fpssm feature\n";
 
-		if (-e "tmp/$ouputFileName\_no_header"){
+		if (-e "$ouputFileName\_no_header"){
 			print "\n";
 			print "Adding header\n";
-			print "python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 20 -o $output_file\n";
-			print `python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 20 -o $output_file`;
+			print "python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 20 -o $output_file\n";
+			print `python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 20 -o $output_file`;
 			if($my_env_osname eq 'MSWin32'){
 				print "\n";
-				print "Deleting tmp\\$ouputFileName\_no_header\n";
-				print "del tmp\\$ouputFileName\_no_header\n";
-				print `del tmp\\$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "del $ouputFileName\_no_header\n";
+				print `del $ouputFileName\_no_header`;
 			} else {
 				print "\n";
-				print "Deleting tmp/$ouputFileName\_no_header\n";
-				print "rm tmp/$ouputFileName\_no_header\n";
-				print `rm tmp/$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "rm $ouputFileName\_no_header\n";
+				print `rm $ouputFileName\_no_header`;
 			}
 		}
 	} elsif ($header eq "F"){
 		print "Start to extract d_fpssm feature\n";
-		print "python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
 		print "Sucess to extract d_fpssm feature\n";
 	}
 } elsif($type eq "smoothed_pssm"){
@@ -156,24 +156,24 @@ if($type eq "aac_pssm") {
 	my $dimension2 = $secondArgument*20;
 	if($header eq "T"){
 		print "Start to extract smoothed_pssm feature\n";
-		print "python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a $firstArgument -b $secondArgument\n";
-		print `python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a $firstArgument -b $secondArgument`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a $firstArgument -b $secondArgument\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a $firstArgument -b $secondArgument`;
 		print "Success to extract smoothed_pssm feature\n";
-		if (-e "tmp/$ouputFileName\_no_header"){
+		if (-e "$ouputFileName\_no_header"){
 			print "\n";
 			print "Adding header\n";
-			print "python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n $dimension2 -o $output_file\n";
-			print `python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n $dimension2 -o $output_file`;
+			print "python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n $dimension2 -o $output_file\n";
+			print `python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n $dimension2 -o $output_file`;
 			if($my_env_osname eq 'MSWin32'){
 				print "\n";
-				print "Deleting tmp\\$ouputFileName\_no_header\n";
-				print "del tmp\\$ouputFileName\_no_header\n";
-				print `del tmp\\$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "del $ouputFileName\_no_header\n";
+				print `del $ouputFileName\_no_header`;
 			} else {
 				print "\n";
-				print "Deleting tmp/$ouputFileName\_no_header\n";
-				print "rm tmp/$ouputFileName\_no_header\n";
-				print `rm tmp/$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "rm $ouputFileName\_no_header\n";
+				print `rm $ouputFileName\_no_header`;
 			}
 		}
 	} elsif($header eq "F"){
@@ -186,30 +186,30 @@ if($type eq "aac_pssm") {
 
 	if($header eq "T"){
 		print "Start to extract ab_pssm feature\n";
-		print "python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract ab_pssm feature\n";
-		if (-e "tmp/$ouputFileName\_no_header"){
+		if (-e "$ouputFileName\_no_header"){
 			print "\n";
 			print "Adding header\n";
-			print "python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 400 -o $output_file\n";
-			print `python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 400 -o $output_file`;
+			print "python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 400 -o $output_file\n";
+			print `python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 400 -o $output_file`;
 			if($my_env_osname eq 'MSWin32'){
 				print "\n";
-				print "Deleting tmp\\$ouputFileName\_no_header\n";
-				print "del tmp\\$ouputFileName\_no_header\n";
-				print `del tmp\\$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "del $ouputFileName\_no_header\n";
+				print `del $ouputFileName\_no_header`;
 			} else {
 				print "\n";
-				print "Deleting tmp/$ouputFileName\_no_header\n";
-				print "rm tmp/$ouputFileName\_no_header\n";
-				print `rm tmp/$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "rm $ouputFileName\_no_header\n";
+				print `rm $ouputFileName\_no_header`;
 			}
 		}
 	} elsif ($header eq "F"){
 		print "Start to extract ab_pssm feature\n";
-		print "python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract ab_pssm feature\n";
 	}
 }
@@ -218,30 +218,30 @@ elsif($type eq "pssm_composition")
 {
 	if($header eq "T"){
 		print "Start to extract pssm_composition feature\n";
-		print "python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract pssm_composition feature\n";
-		if (-e "tmp/$ouputFileName\_no_header"){
+		if (-e "$ouputFileName\_no_header"){
 			print "\n";
 			print "Adding header\n";
-			print "python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type  -n  400 -o $output_file\n";
-			print `python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type   -n  400 -o $output_file`;
+			print "python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type  -n  400 -o $output_file\n";
+			print `python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type   -n  400 -o $output_file`;
 			if($my_env_osname eq 'MSWin32'){
 				print "\n";
-				print "Deleting tmp\\$ouputFileName\_no_header\n";
-				print "del tmp\\$ouputFileName\_no_header\n";
-				print `del tmp\\$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "del $ouputFileName\_no_header\n";
+				print `del $ouputFileName\_no_header`;
 			} else {
 				print "\n";
-				print "Deleting tmp/$ouputFileName\_no_header\n";
-				print "rm tmp/$ouputFileName\_no_header\n";
-				print `rm tmp/$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "rm $ouputFileName\_no_header\n";
+				print `rm $ouputFileName\_no_header`;
 			}
 		}
 	} elsif ($header eq "F"){
 		print "Start to extract pssm_composition feature\n";
-		print "python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract pssm_composition feature\n";
 	}
 }
@@ -250,30 +250,30 @@ elsif($type eq "rpm_pssm")
 {
 	if($header eq "T"){
 		print "Start to extract rpm_pssm feature\n";
-		print "python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract rpm_pssm feature\n";
-		if (-e "tmp/$ouputFileName\_no_header"){
+		if (-e "$ouputFileName\_no_header"){
 			print "\n";
 			print "Adding header\n";
-			print "python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 400 -o $output_file\n";
-			print `python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 400 -o $output_file`;
+			print "python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 400 -o $output_file\n";
+			print `python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 400 -o $output_file`;
 			if($my_env_osname eq 'MSWin32'){
 				print "\n";
-				print "Deleting tmp\\$ouputFileName\_no_header\n";
-				print "del tmp\\$ouputFileName\_no_header\n";
-				print `del tmp\\$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "del $ouputFileName\_no_header\n";
+				print `del $ouputFileName\_no_header`;
 			} else {
 				print "\n";
-				print "Deleting tmp/$ouputFileName\_no_header\n";
-				print "rm tmp/$ouputFileName\_no_header\n";
-				print `rm tmp/$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "rm $ouputFileName\_no_header\n";
+				print `rm $ouputFileName\_no_header`;
 			}
 		}
 	} elsif ($header eq "F"){
 		print "Start to extract rpm_pssm feature\n";
-		print "python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract rpm_pssm feature\n";
 	}
 }
@@ -282,30 +282,30 @@ elsif($type eq "s_fpssm")
 {
 	if($header eq "T"){
 		print "Start to extract s_fpssm feature\n";
-		print "python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract s_fpssm feature\n";
-		if (-e "tmp/$ouputFileName\_no_header"){
+		if (-e "$ouputFileName\_no_header"){
 			print "\n";
 			print "Adding header\n";
-			print "python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 400 -o $output_file\n";
-			print `python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 400 -o $output_file`;
+			print "python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 400 -o $output_file\n";
+			print `python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 400 -o $output_file`;
 			if($my_env_osname eq 'MSWin32'){
 				print "\n";
-				print "Deleting tmp\\$ouputFileName\_no_header\n";
-				print "del tmp\\$ouputFileName\_no_header\n";
-				print `del tmp\\$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "del $ouputFileName\_no_header\n";
+				print `del $ouputFileName\_no_header`;
 			} else {
 				print "\n";
-				print "Deleting tmp/$ouputFileName\_no_header\n";
-				print "rm tmp/$ouputFileName\_no_header\n";
-				print `rm tmp/$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "rm $ouputFileName\_no_header\n";
+				print `rm $ouputFileName\_no_header`;
 			}
 		}
 	} elsif ($header eq "F"){
 		print "Start to extract s_fpssm feature\n";
-		print "python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract s_fpssm feature\n";
 	}
 }
@@ -314,30 +314,30 @@ elsif($type eq "dpc_pssm")
 {
 	if($header eq "T"){
 		print "Start to extract dpc_pssm feature\n";
-		print "python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract dpc_pssm feature\n";
-		if (-e "tmp/$ouputFileName\_no_header"){
+		if (-e "$ouputFileName\_no_header"){
 			print "\n";
 			print "Adding header\n";
-			print "python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 400 -o $output_file\n";
-			print `python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 400 -o $output_file`;
+			print "python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 400 -o $output_file\n";
+			print `python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 400 -o $output_file`;
 			if($my_env_osname eq 'MSWin32'){
 				print "\n";
-				print "Deleting tmp\\$ouputFileName\_no_header\n";
-				print "del tmp\\$ouputFileName\_no_header\n";
-				print `del tmp\\$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "del $ouputFileName\_no_header\n";
+				print `del $ouputFileName\_no_header`;
 			} else {
 				print "\n";
-				print "Deleting tmp/$ouputFileName\_no_header\n";
-				print "rm tmp/$ouputFileName\_no_header\n";
-				print `rm tmp/$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "rm $ouputFileName\_no_header\n";
+				print `rm $ouputFileName\_no_header`;
 			}
 		}
 	} elsif ($header eq "F"){
 		print "Start to extract dpc_pssm feature\n";
-		print "python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract dpc_pssm feature\n";
 	}
 }
@@ -353,31 +353,31 @@ elsif($type eq "k_separated_bigrams_pssm")
 
 	if($header eq "T"){
 		print "Start to extract k_separated_bigrams_pssm feature\n";
-		print "python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a $firstArgument -b 0\n";
-		print `python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a $firstArgument -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a $firstArgument -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a $firstArgument -b 0`;
 		print "Success to extract k_separated_bigrams_pssm feature\n";
-		if (-e "tmp/$ouputFileName\_no_header"){
+		if (-e "$ouputFileName\_no_header"){
 			print "\n";
 			print "Adding header\n";
-			print "python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 400 -o $output_file\n";
-			print `python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 400 -o $output_file`;
+			print "python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 400 -o $output_file\n";
+			print `python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 400 -o $output_file`;
 			if($my_env_osname eq 'MSWin32'){
 				print "\n";
-				print "Deleting tmp\\$ouputFileName\_no_header\n";
-				print "del tmp\\$ouputFileName\_no_header\n";
-				print `del tmp\\$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "del $ouputFileName\_no_header\n";
+				print `del $ouputFileName\_no_header`;
 			} else {
 				print "\n";
-				print "Deleting tmp/$ouputFileName\_no_header\n";
-				print "rm tmp/$ouputFileName\_no_header\n";
-				print `rm tmp/$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "rm $ouputFileName\_no_header\n";
+				print `rm $ouputFileName\_no_header`;
 
 			}
 		}
 	} elsif ($header eq "F"){
 		print "Start to extract k_separated_bigrams_pssm feature\n";
-		print "python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a $firstArgument -b 0\n";
-		print `python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a $firstArgument -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a $firstArgument -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a $firstArgument -b 0`;
 		print "Success to extract k_separated_bigrams_pssm feature\n";
 	}
 
@@ -387,30 +387,30 @@ elsif($type eq "tri_gram_pssm")
 {
 	if($header eq "T"){
 		print "Start to extract tri_gram_pssm feature\n";
-		print "python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract tri_gram_pssm feature\n";
-		if (-e "tmp/$ouputFileName\_no_header"){
+		if (-e "$ouputFileName\_no_header"){
 			print "\n";
 			print "Adding header\n";
-			print "python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 8000 -o $output_file\n";
-			print `python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 8000 -o $output_file`;
+			print "python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 8000 -o $output_file\n";
+			print `python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 8000 -o $output_file`;
 			if($my_env_osname eq 'MSWin32'){
 				print "\n";
-				print "Deleting tmp\\$ouputFileName\_no_header\n";
-				print "del tmp\\$ouputFileName\_no_header\n";
-				print `del tmp\\$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "del $ouputFileName\_no_header\n";
+				print `del $ouputFileName\_no_header`;
 			} else {
 				print "\n";
-				print "Deleting tmp/$ouputFileName\_no_header\n";
-				print "rm tmp/$ouputFileName\_no_header\n";
-				print `rm tmp/$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "rm $ouputFileName\_no_header\n";
+				print `rm $ouputFileName\_no_header`;
 			}
 		}
 	} elsif ($header eq "F"){
 		print "Start to extract tri_gram_pssm feature\n";
-		print "python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract tri_gram_pssm feature\n";
 	}
 }
@@ -419,30 +419,30 @@ elsif($type eq "eedp")
 {
 	if($header eq "T"){
 		print "Start to extract eedp feature\n";
-		print "python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract eedp feature\n";
-		if (-e "tmp/$ouputFileName\_no_header"){
+		if (-e "$ouputFileName\_no_header"){
 			print "\n";
 			print "Adding header\n";
-			print "python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 400 -o $output_file\n";
-			print `python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 400 -o $output_file`;
+			print "python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 400 -o $output_file\n";
+			print `python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 400 -o $output_file`;
 			if($my_env_osname eq 'MSWin32'){
 				print "\n";
-				print "Deleting tmp\\$ouputFileName\_no_header\n";
-				print "del tmp\\$ouputFileName\_no_header\n";
-				print `del tmp\\$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "del $ouputFileName\_no_header\n";
+				print `del $ouputFileName\_no_header`;
 			} else {
 				print "\n";
-				print "Deleting tmp/$ouputFileName\_no_header\n";
-				print "rm tmp/$ouputFileName\_no_header\n";
-				print `rm tmp/$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "rm $ouputFileName\_no_header\n";
+				print `rm $ouputFileName\_no_header`;
 			}
 		}
 	} elsif ($header eq "F"){
 		print "Start to extract eedp feature\n";
-		print "python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract eedp feature\n";
 	}
 }
@@ -451,30 +451,30 @@ elsif($type eq "tpc")
 {
 	if($header eq "T"){
 		print "Start to extract tpc feature\n";
-		print "python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract tpc feature\n";
-		if (-e "tmp/$ouputFileName\_no_header"){
+		if (-e "$ouputFileName\_no_header"){
 			print "\n";
 			print "Adding header\n";
-			print "python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 400 -o $output_file\n";
-			print `python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 400 -o $output_file`;
+			print "python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 400 -o $output_file\n";
+			print `python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 400 -o $output_file`;
 			if($my_env_osname eq 'MSWin32'){
 				print "\n";
-				print "Deleting tmp\\$ouputFileName\_no_header\n";
-				print "del tmp\\$ouputFileName\_no_header\n";
-				print `del tmp\\$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "del $ouputFileName\_no_header\n";
+				print `del $ouputFileName\_no_header`;
 			} else {
 				print "\n";
-				print "Deleting tmp/$ouputFileName\_no_header\n";
-				print "rm tmp/$ouputFileName\_no_header\n";
-				print `rm tmp/$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "rm $ouputFileName\_no_header\n";
+				print `rm $ouputFileName\_no_header`;
 			}
 		}
 	} elsif ($header eq "F"){
 		print "Start to extract tpc feature\n";
-		print "python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract tpc feature\n";
 	}
 }
@@ -483,30 +483,30 @@ elsif($type eq "edp")
 {
 	if($header eq "T"){
 		print "Start to extract edp feature\n";
-		print "python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract edp feature\n";
-		if (-e "tmp/$ouputFileName\_no_header"){
+		if (-e "$ouputFileName\_no_header"){
 			print "\n";
 			print "Adding header\n";
-			print "python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 20 -o $output_file\n";
-			print `python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 20 -o $output_file`;
+			print "python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 20 -o $output_file\n";
+			print `python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 20 -o $output_file`;
 			if($my_env_osname eq 'MSWin32'){
 				print "\n";
-				print "Deleting tmp\\$ouputFileName\_no_header\n";
-				print "del tmp\\$ouputFileName\_no_header\n";
-				print `del tmp\\$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "del $ouputFileName\_no_header\n";
+				print `del $ouputFileName\_no_header`;
 			} else {
 				print "\n";
-				print "Deleting tmp/$ouputFileName\_no_header\n";
-				print "rm tmp/$ouputFileName\_no_header\n";
-				print `rm tmp/$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "rm $ouputFileName\_no_header\n";
+				print `rm $ouputFileName\_no_header`;
 			}
 		}
 	} elsif ($header eq "F"){
 		print "Start to extract edp feature\n";
-		print "python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract edp feature\n";
 	}
 }
@@ -515,30 +515,30 @@ elsif($type eq "rpssm")
 {
 	if($header eq "T"){
 		print "Start to extract rpssm feature\n";
-		print "python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract rpssm feature\n";
-		if (-e "tmp/$ouputFileName\_no_header"){
+		if (-e "$ouputFileName\_no_header"){
 			print "\n";
 			print "Adding header\n";
-			print "python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 110 -o $output_file\n";
-			print `python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 110 -o $output_file`;
+			print "python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 110 -o $output_file\n";
+			print `python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 110 -o $output_file`;
 			if($my_env_osname eq 'MSWin32'){
 				print "\n";
-				print "Deleting tmp\\$ouputFileName\_no_header\n";
-				print "del tmp\\$ouputFileName\_no_header\n";
-				print `del tmp\\$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "del $ouputFileName\_no_header\n";
+				print `del $ouputFileName\_no_header`;
 			} else {
 				print "\n";
-				print "Deleting tmp/$ouputFileName\_no_header\n";
-				print "rm tmp/$ouputFileName\_no_header\n";
-				print `rm tmp/$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "rm $ouputFileName\_no_header\n";
+				print `rm $ouputFileName\_no_header`;
 			}
 		}
 	} elsif ($header eq "F"){
 		print "Start to extract rpssm feature\n";
-		print "python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract rpssm feature\n";
 	}
 }
@@ -554,31 +554,31 @@ elsif($type eq "pse_pssm")
 
 	if($header eq "T"){
 		print "Start to extract pse_pssm feature\n";
-		print "python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a $firstArgument -b 0\n";
-		print `python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a $firstArgument -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a $firstArgument -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a $firstArgument -b 0`;
 		print "Success to extract pse_pssm feature\n";
-		if (-e "tmp/$ouputFileName\_no_header"){
+		if (-e "$ouputFileName\_no_header"){
 			print "\n";
 			print "Adding header\n";
-			print "python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 40 -o $output_file\n";
-			print `python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 40 -o $output_file`;
+			print "python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 40 -o $output_file\n";
+			print `python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 40 -o $output_file`;
 			if($my_env_osname eq 'MSWin32'){
 				print "\n";
-				print "Deleting tmp\\$ouputFileName\_no_header\n";
-				print "del tmp\\$ouputFileName\_no_header\n";
-				print `del tmp\\$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "del $ouputFileName\_no_header\n";
+				print `del $ouputFileName\_no_header`;
 			} else {
 				print "\n";
-				print "Deleting tmp/$ouputFileName\_no_header\n";
-				print "rm tmp/$ouputFileName\_no_header\n";
-				print `rm tmp/$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "rm $ouputFileName\_no_header\n";
+				print `rm $ouputFileName\_no_header`;
 			}
 		}
 
 	} elsif ($header eq "F"){
 		print "Start to extract pse_pssm feature\n";
-		print "python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a $firstArgument -b 0\n";
-		print `python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a $firstArgument -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a $firstArgument -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a $firstArgument -b 0`;
 		print "Success to extract pse_pssm feature\n";
 	}
 }
@@ -595,30 +595,30 @@ elsif($type eq "dp_pssm")
 	my $dimension15 = ($firstArgument+1)*40;
 	if($header eq "T"){
 		print "Start to extract dp_pssm feature\n";
-		print "python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a $firstArgument -b 0\n";
-		print `python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a $firstArgument -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a $firstArgument -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a $firstArgument -b 0`;
 		print "Success to extract dp_pssm feature\n";
-		if (-e "tmp/$ouputFileName\_no_header"){
+		if (-e "$ouputFileName\_no_header"){
 			print "\n";
 			print "Adding header\n";
-			print "python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n $dimension15 -o $output_file\n";
-			print `python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n $dimension15 -o $output_file`;
+			print "python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n $dimension15 -o $output_file\n";
+			print `python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n $dimension15 -o $output_file`;
 			if($my_env_osname eq 'MSWin32'){
 				print "\n";
-				print "Deleting tmp\\$ouputFileName\_no_header\n";
-				print "del tmp\\$ouputFileName\_no_header\n";
-				print `del tmp\\$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "del $ouputFileName\_no_header\n";
+				print `del $ouputFileName\_no_header`;
 			} else {
 				print "\n";
-				print "Deleting tmp/$ouputFileName\_no_header\n";
-				print "rm tmp/$ouputFileName\_no_header\n";
-				print `rm tmp/$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "rm $ouputFileName\_no_header\n";
+				print `rm $ouputFileName\_no_header`;
 			}
 		}
 	} elsif ($header eq "F"){
 		print "Start to extract dp_pssm feature\n";
-		print "python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a $firstArgument -b 0\n";
-		print `python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a $firstArgument -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a $firstArgument -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a $firstArgument -b 0`;
 		print "Success to extract dp_pssm feature\n";
 	}
 }
@@ -635,30 +635,30 @@ elsif($type eq "pssm_ac")
 	my $dimension16 = $firstArgument*20;
 	if($header eq "T"){
 		print "Start to extract pssm_ac feature\n";
-		print "python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a $firstArgument -b 0\n";
-		print `python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a $firstArgument -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a $firstArgument -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a $firstArgument -b 0`;
 		print "Success to extract pssm_ac feature\n";
-		if (-e "tmp/$ouputFileName\_no_header"){
+		if (-e "$ouputFileName\_no_header"){
 			print "\n";
 			print "Adding header\n";
-			print "python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n $dimension16 -o $output_file\n";
-			print `python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n $dimension16 -o $output_file`;
+			print "python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n $dimension16 -o $output_file\n";
+			print `python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n $dimension16 -o $output_file`;
 			if($my_env_osname eq 'MSWin32'){
 				print "\n";
-				print "Deleting tmp\\$ouputFileName\_no_header\n";
-				print "del tmp\\$ouputFileName\_no_header\n";
-				print `del tmp\\$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "del $ouputFileName\_no_header\n";
+				print `del $ouputFileName\_no_header`;
 			} else {
 				print "\n";
-				print "Deleting tmp/$ouputFileName\_no_header\n";
-				print "rm tmp/$ouputFileName\_no_header\n";
-				print `rm tmp/$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "rm $ouputFileName\_no_header\n";
+				print `rm $ouputFileName\_no_header`;
 			}
 		}
 	} elsif ($header eq "F"){
 		print "Start to extract pssm_ac feature\n";
-		print "python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a $firstArgument -b 0\n";
-		print `python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a $firstArgument -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a $firstArgument -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a $firstArgument -b 0`;
 		print "Success to extract pssm_ac feature\n";
 	}
 }
@@ -675,30 +675,30 @@ elsif($type eq "pssm_cc")
 	my $dimension17 = $firstArgument*380;
 	if($header eq "T"){
 		print "Start to extract pssm_cc feature\n";
-		print "python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a $firstArgument -b 0\n";
-		print `python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a $firstArgument -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a $firstArgument -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a $firstArgument -b 0`;
 		print "Success to extract pssm_cc feature\n";
-		if (-e "tmp/$ouputFileName\_no_header"){
+		if (-e "$ouputFileName\_no_header"){
 			print "\n";
 			print "Adding header\n";
-			print "python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n $dimension17 -o $output_file\n";
-			print `python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n $dimension17 -o $output_file`;
+			print "python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n $dimension17 -o $output_file\n";
+			print `python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n $dimension17 -o $output_file`;
 			if($my_env_osname eq 'MSWin32'){
 				print "\n";
-				print "Deleting tmp\\$ouputFileName\_no_header\n";
-				print "del tmp\\$ouputFileName\_no_header\n";
-				print `del tmp\\$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "del $ouputFileName\_no_header\n";
+				print `del $ouputFileName\_no_header`;
 			} else {
 				print "\n";
-				print "Deleting tmp/$ouputFileName\_no_header\n";
-				print "rm tmp/$ouputFileName\_no_header\n";
-				print `rm tmp/$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "rm $ouputFileName\_no_header\n";
+				print `rm $ouputFileName\_no_header`;
 			}
 		}
 	} elsif ($header eq "F"){
 		print "Start to extract pssm_cc feature\n";
-		print "python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a $firstArgument -b 0\n";
-		print `python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a $firstArgument -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a $firstArgument -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a $firstArgument -b 0`;
 		print "Success to extract pssm_cc feature\n";
 	}
 }
@@ -707,30 +707,30 @@ elsif($type eq "aadp_pssm")
 {
 	if($header eq "T"){
 		print "Start to extract aadp_pssm feature\n";
-		print "python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract aadp_pssm feature\n";
-		if (-e "tmp/$ouputFileName\_no_header"){
+		if (-e "$ouputFileName\_no_header"){
 			print "\n";
 			print "Adding header\n";
-			print "python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 420 -o $output_file\n";
-			print `python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 420 -o $output_file`;
+			print "python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 420 -o $output_file\n";
+			print `python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 420 -o $output_file`;
 			if($my_env_osname eq 'MSWin32'){
 				print "\n";
-				print "Deleting tmp\\$ouputFileName\_no_header\n";
-				print "del tmp\\$ouputFileName\_no_header\n";
-				print `del tmp\\$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "del $ouputFileName\_no_header\n";
+				print `del $ouputFileName\_no_header`;
 			} else {
 				print "\n";
-				print "Deleting tmp/$ouputFileName\_no_header\n";
-				print "rm tmp/$ouputFileName\_no_header\n";
-				print `rm tmp/$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "rm $ouputFileName\_no_header\n";
+				print `rm $ouputFileName\_no_header`;
 			}
 		}
 	} elsif ($header eq "F"){
 		print "Start to extract aadp_pssm feature\n";
-		print "python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract aadp_pssm feature\n";
 	}
 }
@@ -739,30 +739,30 @@ elsif($type eq "aatp")
 {
 	if($header eq "T"){
 		print "Start to extract aatp feature\n";
-		print "python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract aatp feature\n";
-		if (-e "tmp/$ouputFileName\_no_header"){
+		if (-e "$ouputFileName\_no_header"){
 			print "\n";
 			print "Adding header\n";
-			print "python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 420 -o $output_file\n";
-			print `python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 420 -o $output_file`;
+			print "python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 420 -o $output_file\n";
+			print `python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 420 -o $output_file`;
 			if($my_env_osname eq 'MSWin32'){
 				print "\n";
-				print "Deleting tmp\\$ouputFileName\_no_header\n";
-				print "del tmp\\$ouputFileName\_no_header\n";
-				print `del tmp\\$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "del $ouputFileName\_no_header\n";
+				print `del $ouputFileName\_no_header`;
 			} else {
 				print "\n";
-				print "Deleting tmp/$ouputFileName\_no_header\n";
-				print "rm tmp/$ouputFileName\_no_header\n";
-				print `rm tmp/$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "rm $ouputFileName\_no_header\n";
+				print `rm $ouputFileName\_no_header`;
 			}
 		}
 	} elsif ($header eq "F"){
 		print "Start to extract aatp feature\n";
-		print "python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract aatp feature\n";
 	}
 }
@@ -771,30 +771,30 @@ elsif($type eq "medp")
 {
 	if($header eq "T"){
 		print "Start to extract medp feature\n";
-		print "python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o tmp/$ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $ouputFileName\_no_header -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract medp feature\n";
-		if (-e "tmp/$ouputFileName\_no_header"){
+		if (-e "$ouputFileName\_no_header"){
 			print "\n";
 			print "Adding header\n";
-			print "python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 420 -o $output_file\n";
-			print `python src/headerHandler.py -i tmp/$ouputFileName\_no_header -p $type -n 420 -o $output_file`;
+			print "python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 420 -o $output_file\n";
+			print `python POSSUM_Toolkit/src/headerHandler.py -i $ouputFileName\_no_header -p $type -n 420 -o $output_file`;
 			if($my_env_osname eq 'MSWin32'){
 				print "\n";
-				print "Deleting tmp\\$ouputFileName\_no_header\n";
-				print "del tmp\\$ouputFileName\_no_header\n";
-				print `del tmp\\$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "del $ouputFileName\_no_header\n";
+				print `del $ouputFileName\_no_header`;
 			} else {
 				print "\n";
-				print "Deleting tmp/$ouputFileName\_no_header\n";
-				print "rm tmp/$ouputFileName\_no_header\n";
-				print `rm tmp/$ouputFileName\_no_header`;
+				print "Deleting $ouputFileName\_no_header\n";
+				print "rm $ouputFileName\_no_header\n";
+				print `rm $ouputFileName\_no_header`;
 			}
 		}
 	} elsif ($header eq "F"){
 		print "Start to extract medp feature\n";
-		print "python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
-		print `python src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
+		print "python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0\n";
+		print `python POSSUM_Toolkit/src/possum.py -i $input_file -o $output_file -t $type -p $pssmdir -a 0 -b 0`;
 		print "Success to extract medp feature\n";
 	}
 }
