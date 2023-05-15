@@ -1,4 +1,4 @@
-git from sklearn.neighbors import KNeighborsClassifier as KNN
+from sklearn.neighbors import KNeighborsClassifier as KNN
 from sklearn.linear_model import RidgeClassifier as RIDGE
 from sklearn.svm import SVC
 import pandas as pd
