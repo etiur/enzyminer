@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 setup(name="EP-pred", author="Ruite Xiang", author_email="ruite.xiang@bsc.es",
       description="Prediction of promiscuity in esterases",
       url="https://github.com/etiur/EP-pred", license="MIT",
-      version="%s" % satumut.__version__,
+      version="%s" % ep_pred.__version__,
       packages=find_packages(), python_requires="==3.7", long_description=long_description,
       long_description_content_type="text/markdown",
       classifiers=["Programming Language :: Python :: 3.7",

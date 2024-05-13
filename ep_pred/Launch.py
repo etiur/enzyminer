@@ -2,9 +2,9 @@
 import argparse
 import glob
 import os
-from prediction.predict import vote_and_filter
-from extract.feature_extraction import extract_and_filter
-from extract.generate_pssm import generate_pssm
+from ep_pred.prediction.predict import vote_and_filter
+from ep_pred.extract.feature_extraction import extract_and_filter
+from ep_pred.extract.generate_pssm import generate_pssm
 from subprocess import call
 import shlex
 from os.path import dirname, basename, abspath
